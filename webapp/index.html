@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- SEO Meta Tags -->
+    <title>HotSpot Shop - Магазин вейп продукции</title>
+    <meta name="description" content="HotSpot Shop - лучший выбор вейп продукции. Оригинальные товары, быстрая доставка, выгодные цены.">
+    <meta name="keywords" content="вейп, электронные сигареты, жидкости, pod системы, HotSpot">
+    
+    <!-- Telegram WebApp Meta -->
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- Theme color for mobile browsers -->
+    <meta name="theme-color" content="#212121">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://telegram.org">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://telegram.org">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="static/css/style.css?v=20251022223000">
+    <link rel="stylesheet" href="static/css/style_additions.css?v=20251021160000">
+    <link rel="stylesheet" href="static/css/brand_groups.css?v=20251021160000">
+    
+    <!-- Critical Scripts -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3" defer></script>
+</head>
+<body class="telegram-webapp">
+    <!-- Loader -->
+    <div id="loader" class="loader">
+        <i class="ph ph-spinner"></i>
+        <p>Загрузка...</p>
+    </div>
+
+    <!-- Header -->
+    <header id="header" class="header">
+        <button id="backBtn" class="back-btn" style="display: none;">
+            <i class="ph ph-arrow-left"></i>
+        </button>
+        <div class="header-user-info">
+            <div class="user-avatar" id="userAvatar">П</div>
+            <div class="user-details">
+                <div class="user-fullname" id="userFullName">Пользователь</div>
+                <div class="user-balance" id="userBalance">0₽</div>
+                <div class="user-username" id="userUsername">@username</div>
+            </div>
+        </div>
+        <button id="themeToggle" class="theme-toggle">
+            <i class="ph ph-moon"></i>
+        </button>
+    </header>
+    
+
+    <!-- Main Content -->
+    <main id="app" class="main-content">
+        <!-- Pages will be dynamically inserted here -->
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-page="home">
+            <i class="ph ph-house"></i>
+            <span>Главная</span>
+        </button>
+        <button class="nav-item" data-page="search">
+            <i class="ph ph-magnifying-glass"></i>
+            <span>Поиск</span>
+        </button>
+        <button class="nav-item" data-page="favorites">
+            <i class="ph ph-heart"></i>
+            <span>Избранное</span>
+        </button>
+        <button class="nav-item" data-page="cart">
+            <i class="ph ph-shopping-cart"></i>
+            <span>Корзина</span>
+            <span class="cart-badge" style="display: none;">0</span>
+        </button>
+        <button class="nav-item" data-page="profile">
+            <i class="ph ph-user"></i>
+            <span>Профиль</span>
+        </button>
+    </nav>
+
+    <!-- Flavor Selection Modal (Quick Add) -->
+    <div id="flavorModal" class="modal hidden">
+        <div class="modal-content">
+            <!-- Content will be added by JS -->
+        </div>
+    </div>
+    
+    <!-- Product Detail Modal -->
+    <div id="productDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <!-- Content will be added by JS -->
+        </div>
+    </div>
+    
+    <!-- Order Detail Modal -->
+    <div id="orderDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <!-- Content will be added by JS -->
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Оформление заказа</h2>
+                <button class="modal-close" id="closeCheckout">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="checkoutForm">
+                    <div class="form-group">
+                        <label class="form-label">Ваше имя *</label>
+                        <input type="text" id="customerName" class="form-input" required placeholder="Иван">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Номер телефона *</label>
+                        <input type="tel" id="customerPhone" class="form-input" required placeholder="+79XXXXXXXXX" maxlength="12" pattern="\+79\d{9}">
+                    </div>
+                    
+                    <div class="form-group" id="pickupLocationGroup">
+                        <label class="form-label">Выберите удобное место *</label>
+                        <select id="pickupLocation" class="form-input">
+                            <option value="">Выберите место самовывоза</option>
+                            <option value="ТЦ Житомир">ТЦ Житомир</option>
+                            <option value="ТЦ Макси">ТЦ Макси</option>
+                            <option value="ТЦ Рим">ТЦ Рим</option>
+                            <option value="ТЦ Европа">ТЦ Европа</option>
+                            <option value="ТЦ Зебра">ТЦ Зебра</option>
+                            <option value="ТЦ Юнона">ТЦ Юнона</option>
+                            <option value="ТЦ ЦУМ">ТЦ ЦУМ</option>
+                            <option value="ТЦ Скала">ТЦ Скала</option>
+                            <option value="ТЦ Гамаюн">ТЦ Гамаюн</option>
+                            <option value="Клуб Голд">Клуб Голд</option>
+                            <option value="Заднепровский р-н ПЛАТНО">Заднепровский р-н ПЛАТНО</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="pickupDateGroup">
+                        <label class="form-label">Дата самовывоза *</label>
+                        <select id="pickupDate" class="form-input">
+                            <option value="">Выберите дату</option>
+                            <!-- Заполняется динамически через JS -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="pickupTimeGroup">
+                        <label class="form-label">Время самовывоза *</label>
+                        <select id="pickupTime" class="form-input">
+                            <option value="">Выберите время</option>
+                            <option value="11:00-13:00">🕐 11:00-13:00</option>
+                            <option value="13:00-15:00">🕐 13:00-15:00</option>
+                            <option value="15:00-17:00">🕒 15:00-17:00</option>
+                            <option value="17:00-19:00">🕔 17:00-19:00</option>
+                            <option value="19:00-21:00">🕖 19:00-21:00</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Способ оплаты *</label>
+                        <select id="paymentMethod" class="form-input" required>
+                            <option value="sbp_online">СБП (оплата онлайн)</option>
+                            <option value="sbp_pickup">СБП (оплата при получении)</option>
+                            <option value="cash">Наличные</option>
+                        </select>
+                    </div>
+                    
+                    <!-- НОВОЕ: Промокод для скидки -->
+                    <div class="form-group">
+                        <label class="form-label">Промокод (опционально)</label>
+                        <div class="promo-input-wrapper">
+                            <input type="text" id="checkoutPromoInput" class="form-input" placeholder="Введите промокод для скидки">
+                            <button type="button" id="applyCheckoutPromo" class="btn-apply-promo">Применить</button>
+                        </div>
+                        <div id="checkoutPromoResult" style="display:none; margin-top: 5px; color: #4caf50;"></div>
+                    </div>
+                    
+                    <!-- НОВОЕ: Использовать баланс -->
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="useBalance">
+                            <span>Использовать баланс (<span id="availableBalance">0</span>₽)</span>
+                        </label>
+                    </div>
+                    
+                    <div class="checkout-summary">
+                        <div class="summary-row">
+                            <span>Товары:</span>
+                            <span id="checkoutSubtotal">0₽</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Доставка:</span>
+                            <span id="checkoutDelivery">0₽</span>
+                        </div>
+                        <div class="summary-row" id="discountRow" style="display:none">
+                            <span>Скидка:</span>
+                            <span id="checkoutDiscount">-0₽</span>
+                        </div>
+                        <div class="summary-row" id="balanceRow" style="display:none">
+                            <span>Баланс:</span>
+                            <span id="checkoutBalanceUsed">-0₽</span>
+                        </div>
+                        <div class="summary-row cashback-row" id="cashbackRow" style="display:none">
+                            <span><i class="ph ph-coin"></i> Кешбэк вернётся:</span>
+                            <span class="cashback-amount" id="checkoutCashback">+0₽</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Итого:</span>
+                            <span id="checkoutTotal">0₽</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btn-full" id="submitOrder">
+                    <i class="ph ph-check"></i>
+                    Подтвердить заказ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Proof Modal (СБП) -->
+    <div id="paymentProofModal" class="modal hidden">
+        <div class="modal-content payment-proof-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Подтверждение оплаты</h2>
+                <button class="modal-close" onclick="closePaymentProofModal()">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-info-box">
+                    <h3>✅ Заказ #<span id="paymentOrderNumber"></span> создан</h3>
+                    <p class="payment-instruction" id="paymentInstructionText">💳 Оплатите заказ</p>
+                    
+                    <!-- Данные для оплаты -->
+                    <div class="payment-details" style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin: 15px 0;">
+                        <div class="payment-detail-item" style="margin-bottom: 15px;">
+                            <span class="detail-label" style="display: block; color: #666; font-size: 13px; margin-bottom: 5px;">💰 Сумма к оплате:</span>
+                            <span class="detail-value payment-amount" id="paymentAmountDisplay" style="font-size: 28px; font-weight: 700; color: #2196F3;">0₽</span>
+                        </div>
+                        
+                        <!-- Оплата картой -->
+                        <div class="payment-detail-item" id="cardPaymentBlock" style="margin-bottom: 15px; display: none;">
+                            <span class="detail-label" style="display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 5px;">💳 Номер карты:</span>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <span class="detail-value" id="cardNumberDisplay" style="font-size: 20px; font-weight: 600; font-family: monospace; letter-spacing: 2px; color: #1a1a1a; background: #f8f9fa; padding: 8px 12px; border-radius: 6px; border: 1px solid #e0e0e0;"></span>
+                                <button onclick="app.copyPaymentData()" style="padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; white-space: nowrap;">
+                                    📋 Копировать
+                                </button>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">
+                                <span id="cardBankDisplay"></span> • <span id="cardHolderDisplay"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Оплата по телефону (СБП) -->
+                        <div class="payment-detail-item" id="phonePaymentBlock" style="margin-bottom: 15px; display: none;">
+                            <span class="detail-label" style="display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 5px;">📱 Номер для СБП:</span>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <span class="detail-value" id="phoneNumberDisplay" style="font-size: 20px; font-weight: 600; font-family: monospace; color: #1a1a1a; background: #f8f9fa; padding: 8px 12px; border-radius: 6px; border: 1px solid #e0e0e0;"></span>
+                                <button onclick="app.copyPaymentData()" style="padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; white-space: nowrap;">
+                                    📋 Копировать
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-detail-item" style="margin-bottom: 0;">
+                            <span class="detail-label" style="display: block; color: #666; font-size: 13px; margin-bottom: 5px;">📝 Обязательно укажите в комментарии:</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="detail-value" id="paymentPurpose" style="font-size: 18px; font-weight: 600; color: #FF5722;">Заказ #<span id="paymentPurposeNumber"></span></span>
+                                <button onclick="app.copyOrderComment()" style="padding: 8px 16px; background: #FF5722; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                                    📋 Копировать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-instructions" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; position: relative; z-index: 1;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600; color: #1976d2;">📋 Инструкция по оплате:</p>
+                        <ol id="paymentInstructionsList" style="margin: 0; padding-left: 20px; font-size: 14px; color: #555; line-height: 1.6;">
+                            <li>Откройте приложение вашего банка</li>
+                            <li id="paymentStep2">Выберите "Переводы"</li>
+                            <li id="paymentStep3">Скопируйте и вставьте данные</li>
+                            <li>Введите сумму: <span id="paymentAmountInstruction" style="font-weight: 600;">0₽</span></li>
+                            <li><strong style="color: #FF5722;">ВАЖНО!</strong> В комментарии укажите: <span id="paymentCommentInstruction" style="font-weight: 600;"></span></li>
+                            <li>Подтвердите перевод</li>
+                            <li>Загрузите скриншот подтверждения ниже ⬇️</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <form id="paymentProofForm">
+                    <div class="form-group">
+                        <label class="form-label">Ваш номер телефона для связи *</label>
+                        <input type="tel" id="paymentPhone" class="form-input" required placeholder="+79XXXXXXXXX" maxlength="12" pattern="\+79\d{9}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Скриншот оплаты *</label>
+                        <input type="file" id="paymentScreenshot" class="form-input-file" accept="image/*" required>
+                        <div id="screenshotPreview" class="screenshot-preview"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <i class="ph ph-check"></i>
+                        Отправить подтверждение
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+    
+    <!-- Offline indicator -->
+    <div id="offline-indicator" class="offline-indicator" style="display: none;">
+        <i class="ph ph-wifi-slash"></i>
+        <span>Нет соединения</span>
+    </div>
+
+    <!-- Main Application Script -->
+    <script src="static/js/app_v37.js?v=20251022231000"></script>
+    
+    <!-- Error tracking -->
+    <script>
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+            // Можно добавить отправку ошибок на сервер
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+        });
+        
+        // Network status monitoring
+        window.addEventListener('online', function() {
+            document.getElementById('offline-indicator').style.display = 'none';
+        });
+        
+        window.addEventListener('offline', function() {
+            document.getElementById('offline-indicator').style.display = 'flex';
+        });
+    </script>
+</body>
+</html>
+

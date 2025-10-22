@@ -1,0 +1,3536 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HotSpot Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding-bottom: 60px;
+        }
+
+        /* Навигация внизу */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            overflow-x: auto;
+            overflow-y: hidden;
+            z-index: 1000;
+            height: 60px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+
+        .bottom-nav::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .nav-item {
+            flex: 0 0 auto;
+            min-width: 70px;
+            padding: 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #999;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-item.active {
+            color: #ff6b35;
+        }
+
+        .nav-item span {
+            font-size: 11px;
+            margin-top: 2px;
+            color: inherit;
+        }
+
+        /* Контент */
+        .page {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Статистика */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff6b35;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .chart-container {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .chart-container canvas {
+            max-height: 250px;
+        }
+
+        /* Заказы */
+        .order-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .order-id {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .order-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-paid { background: #d1ecf1; color: #0c5460; }
+        .status-confirmed { background: #d4edda; color: #155724; }
+        .status-completed { background: #c3e6cb; color: #155724; }
+
+        .order-info {
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .order-items {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        /* Клиенты */
+        .client-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .client-name {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .client-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .client-balance {
+            font-weight: 600;
+            color: #ff6b35;
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .btn-primary:active {
+            opacity: 0.8;
+        }
+
+        .btn-secondary {
+            background: #e8e8e8;
+            color: #333;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            flex: 0.5;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+        
+        .btn-success:active {
+            opacity: 0.8;
+        }
+
+        /* Товары */
+        .product-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .product-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .product-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .product-image {
+            width: 60px;
+            height: 60px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .product-price {
+            color: #ff6b35;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .product-qty {
+            color: #999;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .product-actions button {
+            flex: 1;
+            padding: 6px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #e8e8e8;
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* Промокоды */
+        .promo-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .promo-code {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ff6b35;
+            font-family: monospace;
+            margin-bottom: 8px;
+        }
+
+        .promo-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .promo-label {
+            color: #999;
+        }
+
+        .promo-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: flex-end;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 100%;
+            border-radius: 12px 12px 0 0;
+            padding: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        /* Поиск и фильтры */
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .search-bar select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 200px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 10px;
+            background: #e8e8e8;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* Product Images Management */
+        .product-images-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .product-image-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .product-image-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .product-image-item .image-info {
+            flex: 1;
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .product-image-item .image-order {
+            font-weight: bold;
+            color: #ff6b35;
+            font-size: 14px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .product-image-item .image-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .product-image-item .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .product-image-item .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+
+        .product-image-item .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .product-image-item .btn-sm:hover {
+            opacity: 0.8;
+        }
+
+        .product-image-item .btn-sm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- Статистика -->
+    <div id="stats" class="page active">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0; font-size: 18px;">💰 Финансы</h2>
+            <div id="productsCounter" style="background: #4CAF50; color: white; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: 600;">
+                📦 Товаров: <span id="totalProducts">0</span>
+            </div>
+        </div>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalRevenue">0₽</div>
+                <div class="stat-label">Выручка (выполнено)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgCheck">0₽</div>
+                <div class="stat-label">Средний чек</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 15px 0;">
+            <h2 style="margin: 0; font-size: 18px;">📦 Заказы</h2>
+            <button onclick="clearOrdersData()" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;">
+                🗑️ Очистить все заказы
+            </button>
+        </div>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalOrders">0</div>
+                <div class="stat-label">Выполнено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingOrders">0</div>
+                <div class="stat-label">Ожидает</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="todayOrders">0</div>
+                <div class="stat-label">Сегодня</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="weekOrders">0</div>
+                <div class="stat-label">За неделю</div>
+            </div>
+        </div>
+        
+        <h2 style="margin: 20px 0 15px 0; font-size: 18px;">💰 Прибыль</h2>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="netProfit" style="color: #4CAF50;">0₽</div>
+                <div class="stat-label">Чистая прибыль</div>
+                <small style="color: #999; font-size: 11px;">Сколько заработали (с учётом скидок)</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="discountSpent" style="color: #f44336;">0₽</div>
+                <div class="stat-label">Потрачено на скидки</div>
+                <small style="color: #999; font-size: 11px;">Скидки + промокоды + баланс</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="grossProfit" style="color: #2196F3;">0₽</div>
+                <div class="stat-label">Доход от продаж</div>
+                <small style="color: #999; font-size: 11px;">Сколько получили за товары</small>
+            </div>
+        </div>
+        
+        <h2 style="margin: 20px 0 15px 0; font-size: 18px;">👥 Клиенты</h2>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalClients">0</div>
+                <div class="stat-label">Всего</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="newClientsToday">0</div>
+                <div class="stat-label">Новые сегодня</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeClients">0</div>
+                <div class="stat-label">Активные (≥1 заказ)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalBalance">0₽</div>
+                <div class="stat-label">Баланс клиентов</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 style="margin-bottom: 15px; font-size: 14px;">Продажи за 7 дней</h3>
+            <canvas id="salesChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3 style="margin-bottom: 15px; font-size: 14px;">Топ товары</h3>
+            <canvas id="topProductsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Заказы -->
+    <div id="orders" class="page">
+        <div class="search-bar">
+            <select id="orderFilter">
+                <option value="">Все статусы</option>
+                <option value="pending">Ожидает</option>
+                <option value="paid">Оплачен</option>
+                <option value="confirmed">Подтвержден</option>
+                <option value="completed">Выполнен</option>
+            </select>
+        </div>
+        <div id="ordersList"></div>
+    </div>
+
+    <!-- Клиенты -->
+    <div id="clients" class="page">
+        <div class="search-bar">
+            <input type="text" id="clientSearch" placeholder="Поиск...">
+            <select id="clientSort">
+                <option value="date">По дате</option>
+                <option value="balance">По балансу</option>
+                <option value="orders">По заказам</option>
+            </select>
+        </div>
+        <div style="margin: 10px 0;">
+            <button onclick="selectRandomClient()" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s;">
+                🎲 Случайный пользователь для розыгрыша
+            </button>
+        </div>
+        <div id="clientsList"></div>
+    </div>
+
+        <!-- Товары -->
+    <div id="products" class="page">
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button class="btn btn-primary" style="flex: 1;" onclick="openAddProductModal()">
+                + Добавить товар
+            </button>
+            <button class="btn btn-primary" style="flex: 1;" onclick="openAddVariantModal()">
+                + Добавить вариант
+            </button>
+            <button class="btn" style="flex: 1;" onclick="toggleViewMode()" id="viewModeBtn">
+                📝 По вариантам
+            </button>
+        </div>
+        <div class="search-bar">
+            <input type="text" id="productSearch" placeholder="Поиск товара...">
+        </div>
+        <div id="productsList" class="product-list"></div>
+    </div>
+
+    <!-- Категории -->
+    <div id="categories" class="page">
+        <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="openCategoryModal()">
+            + Добавить категорию
+        </button>
+        <div id="categoriesList"></div>
+    </div>
+
+    <!-- Промокоды -->
+    <div id="discounts" class="page">
+        <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="openDiscountModal()">
+            + Создать скидку
+        </button>
+        <div id="discountsList"></div>
+    </div>
+
+    <div id="promos" class="page">
+        <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="openPromoModal()">
+            + Добавить промокод
+        </button>
+        <div id="promosList"></div>
+    </div>
+
+    <!-- Страница настроек -->
+    <div id="settings" class="page">
+        <h2 style="margin-bottom: 20px;">⚙️ Настройки оплаты</h2>
+        
+        <div class="card" style="padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px; color: #666;">Метод оплаты</label>
+                <div style="display: flex; gap: 10px;">
+                    <button id="methodCardBtn" class="payment-method-btn active" onclick="selectPaymentMethod('card')" style="flex: 1; padding: 12px; border: 2px solid #ff6b35; background: #ff6b35; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                        💳 Карта
+                    </button>
+                    <button id="methodPhoneBtn" class="payment-method-btn" onclick="selectPaymentMethod('phone')" style="flex: 1; padding: 12px; border: 2px solid #ddd; background: white; color: #666; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                        📱 Телефон (СБП)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Форма для карты -->
+            <div id="cardForm" style="display: block;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #666;">Номер карты</label>
+                    <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-family: monospace; letter-spacing: 1px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #666;">Имя держателя</label>
+                    <input type="text" id="cardHolder" placeholder="IVAN IVANOV" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #666;">Банк</label>
+                    <input type="text" id="cardBank" placeholder="Сбербанк" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                </div>
+            </div>
+            
+            <!-- Форма для телефона -->
+            <div id="phoneForm" style="display: none;">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #666;">Номер телефона (СБП)</label>
+                    <input type="tel" id="phoneNumber" placeholder="+79001234567" maxlength="12" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-family: monospace;">
+                </div>
+            </div>
+            
+            <button onclick="savePaymentSettings()" class="btn btn-primary" style="width: 100%; padding: 15px; background: #ff6b35; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                💾 Сохранить настройки
+            </button>
+        </div>
+    </div>
+
+    <!-- Нижняя навигация -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="showPage('stats')">
+            📊
+            <span>Стат</span>
+        </button>
+        <button class="nav-item" onclick="showPage('orders')">
+            📦
+            <span>Заказы</span>
+        </button>
+        <button class="nav-item" onclick="showPage('products')">
+            🖼️
+            <span>Товары</span>
+        </button>
+        <button class="nav-item" onclick="showPage('clients')">
+            👥
+            <span>Клиенты</span>
+        </button>
+        <button class="nav-item" onclick="showPage('discounts')">
+            💸
+            <span>Скидки</span>
+        </button>
+        <button class="nav-item" onclick="showPage('promos')">
+            🎟️
+            <span>Промо</span>
+        </button>
+        <button class="nav-item" onclick="showPage('settings')">
+            ⚙️
+            <span>Настройки</span>
+        </button>
+    </div>
+
+    <!-- Модальное окно для редактирования заказа -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Заказ</span>
+                <button class="close-btn" onclick="closeModal('orderModal')">✕</button>
+            </div>
+            <div id="orderDetails"></div>
+            <div class="form-group">
+                <label class="form-label">Статус</label>
+                <select id="orderStatusSelect" class="form-input">
+                    <option value="pending">Ожидает оплаты</option>
+                    <option value="paid">Оплачен</option>
+                    <option value="confirmed">Подтвержден</option>
+                    <option value="completed">Выполнен</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="updateOrderStatus()">
+                Сохранить
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования клиента -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Редактировать клиента</span>
+                <button class="close-btn" onclick="closeModal('clientModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Имя</label>
+                <input type="text" id="clientName" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Телефон</label>
+                <input type="tel" id="clientPhone" class="form-input" placeholder="+79XXXXXXXXX">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Баланс (₽)</label>
+                <input type="number" id="clientBalance" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Telegram ID</label>
+                <input type="text" id="clientTelegramId" class="form-input" readonly style="background: #f5f5f5;">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="contactClient()" id="contactClientBtn">
+                💬 Связаться в Telegram
+            </button>
+            <button class="btn btn-primary" style="width: 100%;" onclick="saveClient()">
+                Сохранить
+            </button>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="resetClientBalance()">
+                    💰 Сбросить баланс
+                </button>
+                <button class="btn" id="banClientBtn" style="flex: 1; background: #ff9800; color: white;" onclick="toggleBanClient()">
+                    🚫 Забанить
+                </button>
+            </div>
+            <button class="btn btn-danger" style="width: 100%; margin-top: 10px;" onclick="deleteClient()">
+                Удалить
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для фото товара -->
+    <div id="photoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="photoModalTitle">Фото товара</span>
+                <button class="close-btn" onclick="closeModal('photoModal')">✕</button>
+            </div>
+            <div class="photo-preview" id="photoPreview">
+                📷
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ссылка на фото</label>
+                <input type="url" id="photoUrl" class="form-input" placeholder="https://...">
+            </div>
+            <div class="file-input-wrapper">
+                <label class="file-input-label">Загрузить фото</label>
+                <input type="file" id="photoFile" accept="image/*">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="saveProductPhoto()">
+                Сохранить
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления промокода -->
+    <div id="promoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Добавить промокод</span>
+                <button class="close-btn" onclick="closeModal('promoModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Код промокода</label>
+                <input type="text" id="promoCode" class="form-input" placeholder="SUMMER2025" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+                <label class="form-label" style="font-size: 14px; font-weight: 600; color: #333;">
+                    🎯 Тип скидки
+                </label>
+                <select id="promoType" class="form-input" style="font-size: 15px; font-weight: 500; padding: 12px;" onchange="updatePromoValuePlaceholder()">
+                    <option value="percent">📊 Процент скидки (%)</option>
+                    <option value="rub">💰 Скидка в рублях (₽)</option>
+                    <option value="balance">💳 Пополнение баланса (₽)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    Значение <span id="promoValueUnit" style="color: #4CAF50; font-weight: 600;">(в %)</span>
+                </label>
+                <input type="number" id="promoValue" class="form-input" placeholder="10" min="0" step="0.01">
+                <small id="promoValueHint" style="color: #666; font-size: 12px; display: block; margin-top: 4px;">
+                    Например: 10 = скидка 10%
+                </small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Количество использований</label>
+                <select id="promoMaxUses" class="form-input">
+                    <option value="-1">♾️ Безлимитно</option>
+                    <option value="1">1 раз</option>
+                    <option value="5">5 раз</option>
+                    <option value="10">10 раз</option>
+                    <option value="25">25 раз</option>
+                    <option value="50">50 раз</option>
+                    <option value="100">100 раз</option>
+                    <option value="custom">✏️ Свое значение</option>
+                </select>
+                <input type="number" id="promoMaxUsesCustom" class="form-input" placeholder="Введите количество" style="margin-top: 8px; display: none;" min="1">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 14px;" onclick="createPromo()">
+                ✅ Создать промокод
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования варианта -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Редактировать вариант товара</span>
+                <button class="close-btn" onclick="closeModal('editProductModal')">✕</button>
+            </div>
+            <div class="alert" style="background: #e3f2fd; color: #1976d2; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
+                <strong>ℹ️ Примечание:</strong> Цена управляется на уровне товара. Чтобы изменить цену, отредактируйте сам товар (кнопка "✏️ Товар").
+            </div>
+            <div class="form-group">
+                <label class="form-label">Вкус</label>
+                <input type="text" id="productFlavor" class="form-input" placeholder="Виноград лед">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Количество</label>
+                <input type="number" id="productQuantity" class="form-input" placeholder="10">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="saveProduct()">
+                Сохранить
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования основной информации о товаре -->
+    <div id="editMainProductModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <span>Редактировать товар</span>
+                <button class="close-btn" onclick="closeModal('editMainProductModal')">✕</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Название</label>
+                <input type="text" id="mainProductName" class="form-input" placeholder="WAKA soPro 15000">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Бренд</label>
+                <input type="text" id="mainProductBrand" class="form-input" placeholder="WAKA">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <textarea id="mainProductDescription" class="form-input" rows="3" placeholder="Описание товара..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">📸 Изображения товара</label>
+                <small style="color: #999; font-size: 12px; display: block; margin-bottom: 10px;">
+                    Добавьте одно или несколько изображений. Первое изображение будет главным.
+                </small>
+                
+                <div id="productImagesContainer" style="margin-bottom: 15px;">
+                    <!-- Изображения будут загружены здесь -->
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="newImageUrl" class="form-input" placeholder="https://example.com/image.jpg" style="flex: 1;">
+                    <button onclick="addProductImage()" class="btn btn-primary" style="white-space: nowrap;">
+                        ➕ Добавить
+                    </button>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label class="form-label" style="font-size: 13px; margin-bottom: 5px;">Или добавьте несколько URL через Enter или запятую:</label>
+                    <textarea 
+                        id="multipleImagesInput" 
+                        class="form-input" 
+                        rows="4" 
+                        placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg"
+                        style="resize: vertical; font-family: monospace; font-size: 12px;"
+                    ></textarea>
+                    <button onclick="addMultipleProductImages()" class="btn btn-success" style="width: 100%; margin-top: 10px;">
+                        📸 Добавить несколько изображений
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Крепость (например: 20мг, 50мг)</label>
+                <input type="text" id="mainProductStrength" class="form-input" placeholder="20мг">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Объем (например: 100мл, 30мл)</label>
+                <input type="text" id="mainProductVolume" class="form-input" placeholder="100мл">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Батарея (например: 650mAh)</label>
+                <input type="text" id="mainProductBattery" class="form-input" placeholder="650mAh">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Затяжки (например: 15000)</label>
+                <input type="text" id="mainProductPuffs" class="form-input" placeholder="15000">
+            </div>
+            
+            <div class="form-group" style="border-top: 2px solid #f0f0f0; padding-top: 15px; margin-top: 15px;">
+                <label class="form-label" style="color: #ff6b35; font-weight: bold;">💰 Цена и скидка</label>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Текущая цена (₽) <span style="color: red;">*</span></label>
+                <input type="number" id="mainProductPrice" class="form-input" placeholder="500" step="0.01" required>
+                <small style="color: #999; font-size: 12px;">Цена, которую видят покупатели</small>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Старая цена (₽)</label>
+                <input type="number" id="mainProductOldPrice" class="form-input" placeholder="700" step="0.01">
+                <small style="color: #999; font-size: 12px;">Будет показана зачеркнутой (оставьте пустым, если скидки нет)</small>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">💰 Себестоимость (₽)</label>
+                <input type="number" id="mainProductCostPrice" class="form-input" placeholder="300" step="0.01">
+                <small style="color: #999; font-size: 12px;">Закупочная цена (не видна клиентам, используется для расчёта прибыли)</small>
+            </div>
+            
+            <div id="discountPreview" style="margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 6px; display: none;">
+                <div style="font-size: 14px; color: #666;">Предпросмотр:</div>
+                <div style="margin-top: 5px;">
+                    <span id="previewOldPrice" style="text-decoration: line-through; color: #999; font-size: 14px;"></span>
+                    <span id="previewPrice" style="font-size: 18px; font-weight: bold; color: #ff6b35; margin-left: 8px;"></span>
+                    <span id="previewDiscount" style="background: #ff6b35; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px;"></span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="mainProductIsHot">
+                    <span>🔥 Горячий товар</span>
+                </label>
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%;" onclick="saveMainProduct()">
+                Сохранить изменения
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления варианта -->
+    <div id="addVariantModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Добавить вариант товара</span>
+                <button class="close-btn" onclick="closeModal('addVariantModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">ID товара</label>
+                <input type="number" id="variantProductId" class="form-input" placeholder="1">
+                <small style="color: #999; font-size: 12px;">Найдите ID товара в списке товаров</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Вкус</label>
+                <input type="text" id="variantFlavor" class="form-input" placeholder="Виноград лед">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Цена (₽)</label>
+                <input type="number" id="variantPrice" class="form-input" placeholder="500" step="0.01">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Количество</label>
+                <input type="number" id="variantQuantity" class="form-input" placeholder="10">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="createVariant()">
+                Создать
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для управления категориями -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <span id="categoryModalTitle">Добавить категорию</span>
+                <button class="close-btn" onclick="closeModal('categoryModal')">✕</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Название</label>
+                <input type="text" id="categoryName" class="form-input" placeholder="Одноразки">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Иконка (emoji)</label>
+                <input type="text" id="categoryIcon" class="form-input" placeholder="🔥">
+                <small style="color: #999; font-size: 12px;">Можно оставить пустым если используете фото</small>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Изображение (URL)</label>
+                <input type="text" id="categoryImage" class="form-input" placeholder="https://example.com/image.jpg">
+                <small style="color: #999; font-size: 12px;">Прямая ссылка на изображение</small>
+                <div id="categoryImagePreview" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Порядок сортировки</label>
+                <input type="number" id="categoryOrder" class="form-input" placeholder="1" value="1">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Кешбэк (%)</label>
+                <input type="number" id="categoryCashback" class="form-input" placeholder="3.0" value="3.0" step="0.1" min="0" max="100">
+                <small style="color: #999; font-size: 12px;">Процент кешбэка для товаров этой категории</small>
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%;" onclick="saveCategory()">
+                Сохранить
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления товара -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <span>Добавить новый товар</span>
+                <button class="close-btn" onclick="closeModal('addProductModal')">✕</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Название *</label>
+                <input type="text" id="newProductName" class="form-input" placeholder="WAKA soPro 15000" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Бренд *</label>
+                <input type="text" id="newProductBrand" class="form-input" placeholder="WAKA" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Категория *</label>
+                <select id="newProductCategory" class="form-input" required>
+                    <option value="">Выберите категорию</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <textarea id="newProductDescription" class="form-input" rows="3" placeholder="Описание товара..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Фото (URL)</label>
+                <input type="text" id="newProductImage" class="form-input" placeholder="https://example.com/image.jpg">
+                <div id="newProductImagePreview" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Базовая цена (₽) *</label>
+                <input type="number" id="newProductPrice" class="form-input" placeholder="500" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Крепость (например: 20мг, 50мг)</label>
+                <input type="text" id="newProductStrength" class="form-input" placeholder="20мг">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Объем (например: 100мл, 30мл)</label>
+                <input type="text" id="newProductVolume" class="form-input" placeholder="100мл">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Батарея (например: 650mAh)</label>
+                <input type="text" id="newProductBattery" class="form-input" placeholder="650mAh">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Затяжки (например: 15000)</label>
+                <input type="text" id="newProductPuffs" class="form-input" placeholder="15000">
+            </div>
+            
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="newProductIsHot">
+                    <span>Горячий товар</span>
+                </label>
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%;" onclick="createProduct()">
+                Создать товар
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentOrder = null;
+        let currentClient = null;
+        let currentProduct = null;
+        let currentProductForEdit = null;
+        let currentCategory = null;
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadOrders();
+            loadClients();
+            loadProducts();
+            loadCategories();
+            loadPromos();
+
+            // Фильтры
+            document.getElementById('orderFilter').addEventListener('change', loadOrders);
+            document.getElementById('clientSearch').addEventListener('input', loadClients);
+            document.getElementById('clientSort').addEventListener('change', loadClients);
+            document.getElementById('productSearch').addEventListener('input', loadProducts);
+
+            // Превью фото
+            document.getElementById('photoUrl').addEventListener('change', previewPhoto);
+            document.getElementById('photoFile').addEventListener('change', previewPhoto);
+            
+            // Предпросмотр скидки
+            document.getElementById('mainProductPrice').addEventListener('input', updateDiscountPreview);
+            document.getElementById('mainProductOldPrice').addEventListener('input', updateDiscountPreview);
+        });
+
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(page).classList.add('active');
+            event.target.closest('.nav-item').classList.add('active');
+            
+            // Загрузить данные для страницы
+            if (page === 'discounts') {
+                loadDiscounts();
+            } else if (page === 'settings') {
+                loadPaymentSettings();
+            }
+        }
+        
+        // === НАСТРОЙКИ ОПЛАТЫ ===
+        
+        let currentPaymentMethod = 'card';
+        
+        async function loadPaymentSettings() {
+            try {
+                const response = await fetch('/api/payment-settings', {
+                    headers: {
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    currentPaymentMethod = data.payment_method || 'card';
+                    selectPaymentMethod(currentPaymentMethod);
+                    
+                    document.getElementById('cardNumber').value = data.card_number || '';
+                    document.getElementById('cardHolder').value = data.card_holder || '';
+                    document.getElementById('cardBank').value = data.card_bank || '';
+                    document.getElementById('phoneNumber').value = data.phone_number || '';
+                    
+                    // Настроить автоматический ввод +7 для телефона
+                    setupPhoneInput();
+                    
+                    // Настроить форматирование номера карты
+                    setupCardNumberInput();
+                }
+            } catch (error) {
+                console.error('Error loading payment settings:', error);
+            }
+        }
+        
+        function selectPaymentMethod(method) {
+            currentPaymentMethod = method;
+            
+            const cardBtn = document.getElementById('methodCardBtn');
+            const phoneBtn = document.getElementById('methodPhoneBtn');
+            const cardForm = document.getElementById('cardForm');
+            const phoneForm = document.getElementById('phoneForm');
+            
+            if (method === 'card') {
+                cardBtn.style.background = '#ff6b35';
+                cardBtn.style.color = 'white';
+                cardBtn.style.borderColor = '#ff6b35';
+                
+                phoneBtn.style.background = 'white';
+                phoneBtn.style.color = '#666';
+                phoneBtn.style.borderColor = '#ddd';
+                
+                cardForm.style.display = 'block';
+                phoneForm.style.display = 'none';
+            } else {
+                phoneBtn.style.background = '#ff6b35';
+                phoneBtn.style.color = 'white';
+                phoneBtn.style.borderColor = '#ff6b35';
+                
+                cardBtn.style.background = 'white';
+                cardBtn.style.color = '#666';
+                cardBtn.style.borderColor = '#ddd';
+                
+                cardForm.style.display = 'none';
+                phoneForm.style.display = 'block';
+            }
+        }
+        
+        function setupPhoneInput() {
+            const phoneInput = document.getElementById('phoneNumber');
+            if (!phoneInput) return;
+            
+            phoneInput.addEventListener('focus', function() {
+                if (this.value === '') {
+                    this.value = '+7';
+                }
+            });
+            
+            phoneInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/\D/g, '');
+                
+                if (value.length === 0) {
+                    this.value = '+7';
+                    return;
+                }
+                
+                if (value[0] === '8') {
+                    value = '7' + value.slice(1);
+                }
+                
+                if (value[0] !== '7') {
+                    value = '7' + value;
+                }
+                
+                if (value.length > 11) {
+                    value = value.slice(0, 11);
+                }
+                
+                this.value = '+' + value;
+            });
+            
+            phoneInput.addEventListener('blur', function() {
+                if (this.value === '+7') {
+                    this.value = '';
+                }
+            });
+        }
+        
+        function setupCardNumberInput() {
+            const cardInput = document.getElementById('cardNumber');
+            if (!cardInput) return;
+            
+            cardInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/\s/g, '');
+                let formatted = value.match(/.{1,4}/g);
+                this.value = formatted ? formatted.join(' ') : value;
+            });
+        }
+        
+        async function savePaymentSettings() {
+            try {
+                const settings = {
+                    payment_method: currentPaymentMethod,
+                    card_number: document.getElementById('cardNumber').value,
+                    card_holder: document.getElementById('cardHolder').value,
+                    card_bank: document.getElementById('cardBank').value,
+                    phone_number: document.getElementById('phoneNumber').value
+                };
+                
+                const response = await fetch('/api/admin/payment-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify(settings)
+                });
+                
+                if (response.ok) {
+                    alert('✅ Настройки сохранены успешно!');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Error saving payment settings:', error);
+                alert('❌ Ошибка при сохранении настроек');
+            }
+        }
+
+        // ============ СТАТИСТИКА ============
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/admin/orders', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                const orders = await res.json();
+                const allOrders = orders.data || [];
+                
+                // Засчитывать в продажи только completed заказы
+                const completedOrders = allOrders.filter(o => o.status === 'completed');
+                
+                // Заказы за сегодня
+                const today = new Date().toDateString();
+                const todayOrders = allOrders.filter(o => new Date(o.created_at).toDateString() === today);
+                
+                // Заказы за неделю
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                const weekOrders = allOrders.filter(o => new Date(o.created_at) >= weekAgo);
+                
+                const totalRevenue = completedOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                const avgCheck = completedOrders.length > 0 ? Math.round(totalRevenue / completedOrders.length) : 0;
+
+                // Финансы
+                document.getElementById('totalRevenue').textContent = `${totalRevenue.toLocaleString()}₽`;
+                document.getElementById('avgCheck').textContent = `${avgCheck.toLocaleString()}₽`;
+                
+                // Заказы
+                document.getElementById('totalOrders').textContent = completedOrders.length;
+                document.getElementById('pendingOrders').textContent = allOrders.filter(o => o.status === 'pending').length;
+                document.getElementById('todayOrders').textContent = todayOrders.length;
+                document.getElementById('weekOrders').textContent = weekOrders.length;
+
+                // Клиенты
+                const clientsRes = await fetch('/api/admin/clients', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                const clients = await clientsRes.json();
+                const allClients = clients.data || [];
+                
+                const todayClients = allClients.filter(c => new Date(c.created_at).toDateString() === today);
+                const activeClients = allClients.filter(c => (c.orderCount || 0) >= 1);
+                const totalBalance = allClients.reduce((sum, c) => sum + (c.balance || 0), 0);
+                
+                document.getElementById('totalClients').textContent = allClients.length;
+                document.getElementById('newClientsToday').textContent = todayClients.length;
+                document.getElementById('activeClients').textContent = activeClients.length;
+                document.getElementById('totalBalance').textContent = `${Math.round(totalBalance).toLocaleString()}₽`;
+
+                // Прибыль
+                try {
+                    const profitRes = await fetch('/api/admin/profit-stats', {
+                        headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                    });
+                    const profitData = await profitRes.json();
+                    const profit = profitData.data || {};
+                    
+                    document.getElementById('netProfit').textContent = `${Math.round(profit.net_profit || 0).toLocaleString()}₽`;
+                    document.getElementById('discountSpent').textContent = `${Math.round(profit.discount_spent || 0).toLocaleString()}₽`;
+                    document.getElementById('grossProfit').textContent = `${Math.round(profit.gross_profit || 0).toLocaleString()}₽`;
+                } catch (e) {
+                    console.error('Error loading profit stats:', e);
+                    document.getElementById('netProfit').textContent = '0₽';
+                    document.getElementById('discountSpent').textContent = '0₽';
+                    document.getElementById('grossProfit').textContent = '0₽';
+                }
+
+                // Товары (максимальный ID)
+                try {
+                    const productsRes = await fetch('/api/admin/products-grouped', {
+                        headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                    });
+                    const productsData = await productsRes.json();
+                    const grouped = productsData.data || [];
+                    
+                    // Найти максимальный ID товара
+                    let maxId = 0;
+                    let totalProducts = 0;
+                    grouped.forEach(brandGroup => {
+                        totalProducts += brandGroup.products.length;
+                        brandGroup.products.forEach(product => {
+                            if (product.id > maxId) {
+                                maxId = product.id;
+                            }
+                        });
+                    });
+                    
+                    document.getElementById('totalProducts').textContent = `${totalProducts} (ID: ${maxId})`;
+                } catch (e) {
+                    console.error('Error loading products count:', e);
+                }
+
+                drawCharts(allOrders);
+            } catch (e) {
+                console.error('Error loading stats:', e);
+            }
+        }
+
+        function drawCharts(orders) {
+            // График продаж за 7 дней (только completed заказы)
+            const completedOrders = orders.filter(o => o.status === 'completed');
+            const last7Days = [];
+            const sales = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' });
+                last7Days.push(dateStr);
+                
+                const daySales = completedOrders
+                    .filter(o => new Date(o.created_at).toDateString() === date.toDateString())
+                    .reduce((sum, o) => sum + (o.total_amount || 0), 0);
+                sales.push(daySales);
+            }
+
+            const ctx1 = document.getElementById('salesChart');
+            if (ctx1.chart) ctx1.chart.destroy();
+            ctx1.chart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: last7Days,
+                    datasets: [{
+                        label: '₽',
+                        data: sales,
+                        borderColor: '#ff6b35',
+                        backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // График топ товаров (только из completed заказов)
+            const products = {};
+            completedOrders.forEach(o => {
+                if (o.items) {
+                    try {
+                        const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+                        items.forEach(item => {
+                            products[item.name] = (products[item.name] || 0) + item.quantity;
+                        });
+                    } catch (e) {
+                        console.error('Error parsing items:', e);
+                    }
+                }
+            });
+
+            const topProducts = Object.entries(products)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const ctx2 = document.getElementById('topProductsChart');
+            if (ctx2.chart) ctx2.chart.destroy();
+            ctx2.chart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: topProducts.map(p => p[0].substring(0, 15)),
+                    datasets: [{
+                        label: 'Кол-во',
+                        data: topProducts.map(p => p[1]),
+                        backgroundColor: '#ff6b35'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // ============ ЗАКАЗЫ ============
+        async function loadOrders() {
+            try {
+                const status = document.getElementById('orderFilter').value;
+                const res = await fetch('/api/admin/orders', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                let orders = await res.json();
+                orders = orders.data || [];
+
+                if (status) orders = orders.filter(o => o.status === status);
+
+                const html = orders.map(o => `
+                    <div class="order-card" onclick="showOrderModal(${o.id})">
+                        <div class="order-header">
+                            <div class="order-id">#${o.id}</div>
+                            <div class="order-status status-${o.status}">${getStatusLabel(o.status)}</div>
+                        </div>
+                        <div class="order-info">
+                            👤 ${o.customer_name}<br>
+                            💰 ${o.total_amount}₽
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('ordersList').innerHTML = html || '<p style="text-align:center;color:#999;">Заказов нет</p>';
+            } catch (e) {
+                console.error('Error loading orders:', e);
+            }
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'pending': 'Ожидает',
+                'paid': 'Оплачен',
+                'confirmed': 'Подтвержден',
+                'completed': 'Выполнен'
+            };
+            return labels[status] || status;
+        }
+
+        function showOrderModal(orderId) {
+            // Найти заказ и показать детали
+            fetch('/api/admin/orders', {
+                headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+            })
+            .then(r => r.json())
+            .then(data => {
+                const order = data.data.find(o => o.id === orderId);
+                if (order) {
+                    currentOrder = order;
+                    
+                    // Парсим товары
+                    let items = [];
+                    try {
+                        items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || [];
+                    } catch (e) {
+                        console.error('Error parsing items:', e);
+                    }
+                    
+                    const itemsHtml = items.map(item => `
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; padding: 10px; background: #f5f5f5; border-radius: 6px;">
+                            ${item.image ? `<img src="${item.image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">` : ''}
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600;">${item.name}</div>
+                                <div style="font-size: 12px; color: #666;">Вкус: ${item.flavor || 'Не указан'}</div>
+                                <div style="font-size: 12px; color: #666;">${item.quantity} шт × ${item.price}₽</div>
+                            </div>
+                            <div style="font-weight: 700; color: #ff6b35;">${(item.quantity * item.price).toLocaleString()}₽</div>
+                        </div>
+                    `).join('');
+                    
+                    const deliveryInfo = order.delivery_type === 'pickup' 
+                        ? `<strong>📍 Самовывоз:</strong> ${order.pickup_location || 'Не указан'}`
+                        : `<strong>🚗 Доставка:</strong> ${order.delivery_address || 'Не указан'}`;
+                    
+                    // Подтверждение оплаты СБП
+                    const paymentProofHtml = order.payment_method === 'sbp_online' && order.payment_screenshot ? `
+                        <div class="form-group" style="border: 2px solid #4caf50; border-radius: 8px; padding: 15px; background: #f1f8f4;">
+                            <strong style="display: block; margin-bottom: 10px; color: #4caf50;">💳 Подтверждение оплаты СБП</strong>
+                            <div style="margin-bottom: 10px;">
+                                <strong>📱 Телефон клиента:</strong> ${order.payment_phone || 'Не указан'}
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <strong>📸 Скриншот оплаты:</strong><br>
+                                <img src="${order.payment_screenshot}" 
+                                     style="max-width: 100%; max-height: 400px; border-radius: 8px; margin-top: 10px; cursor: pointer;"
+                                     onclick="window.open('${order.payment_screenshot}', '_blank')">
+                            </div>
+                            ${!order.payment_confirmed ? `
+                                <button class="btn btn-success" style="width: 100%; margin-top: 10px;" onclick="confirmPayment(${order.id})">
+                                    ✅ Подтвердить оплату
+                                </button>
+                            ` : `
+                                <div style="padding: 10px; background: #d4edda; color: #155724; border-radius: 6px; text-align: center; margin-top: 10px;">
+                                    ✅ Оплата подтверждена
+                                </div>
+                            `}
+                        </div>
+                    ` : '';
+                    
+                    document.getElementById('orderDetails').innerHTML = `
+                        <div class="form-group">
+                            <strong>👤 Клиент:</strong> ${order.customer_name || 'Не указан'}<br>
+                            <strong>📱 Телефон:</strong> ${order.customer_phone || 'Не указан'}<br>
+                            <strong>💰 Сумма:</strong> ${(order.total_amount || 0).toLocaleString()}₽
+                            ${order.balance_used > 0 ? `<span style="color: #ff6b35; margin-left: 8px;">(баланс: -${order.balance_used}₽)</span>` : ''}<br>
+                            ${deliveryInfo}<br>
+                            <strong>💳 Оплата:</strong> ${order.payment_method || 'Не указан'}<br>
+                            <strong>📅 Дата:</strong> ${new Date(order.created_at).toLocaleString('ru-RU')}
+                        </div>
+                        ${paymentProofHtml}
+                        <div class="form-group">
+                            <strong style="display: block; margin-bottom: 8px;">🛍️ Товары:</strong>
+                            ${itemsHtml || '<p style="color: #999;">Товары не найдены</p>'}
+                        </div>
+                    `;
+                    document.getElementById('orderStatusSelect').value = order.status;
+                    openModal('orderModal');
+                }
+            });
+        }
+
+        async function updateOrderStatus() {
+            if (!currentOrder) return;
+            const status = document.getElementById('orderStatusSelect').value;
+            
+            try {
+                await fetch(`/api/admin/orders/${currentOrder.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify({ status })
+                });
+                closeModal('orderModal');
+                loadOrders();
+                loadStats();
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        async function confirmPayment(orderId) {
+            if (!confirm('Подтвердить оплату заказа #' + orderId + '?')) return;
+            
+            try {
+                const res = await fetch(`/api/admin/orders/${orderId}/confirm-payment`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    }
+                });
+                
+                if (res.ok) {
+                    alert('✅ Оплата подтверждена!');
+                    closeModal('orderModal');
+                    loadOrders();
+                    loadStats();
+                } else {
+                    alert('❌ Ошибка подтверждения оплаты');
+                }
+            } catch (e) {
+                console.error('Error confirming payment:', e);
+                alert('❌ Ошибка подтверждения оплаты');
+            }
+        }
+
+        // ============ КЛИЕНТЫ ============
+        async function selectRandomClient() {
+            try {
+                const res = await fetch('/api/admin/clients', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                const data = await res.json();
+                const allClients = data.data || [];
+                
+                // Фильтруем только клиентов с хотя бы одним заказом
+                const eligibleClients = allClients.filter(client => (client.orderCount || 0) >= 1);
+                
+                if (eligibleClients.length === 0) {
+                    alert('⚠️ Нет пользователей для розыгрыша\n\nУсловия участия:\n• Минимум 1 заказ\n\nВсего клиентов: ' + allClients.length + '\nПодходящих: 0');
+                    return;
+                }
+                
+                // Выбираем случайного пользователя из подходящих
+                const randomIndex = Math.floor(Math.random() * eligibleClients.length);
+                const winner = eligibleClients[randomIndex];
+                
+                // Показываем результат
+                const username = winner.username ? `@${winner.username}` : winner.first_name || `ID: ${winner.telegram_id}`;
+                const message = `🎉 Победитель розыгрыша:\n\n${username}\n\nИмя: ${winner.first_name || 'Не указано'}\nTelegram ID: ${winner.telegram_id}\nБаланс: ${winner.balance || 0}₽\nЗаказов: ${winner.orderCount || 0}\n\n📊 Статистика:\nВсего клиентов: ${allClients.length}\nУчаствовали: ${eligibleClients.length}`;
+                
+                alert(message);
+                
+                // Копируем username в буфер обмена
+                if (winner.username) {
+                    navigator.clipboard.writeText(`@${winner.username}`).then(() => {
+                        console.log('Username скопирован в буфер обмена');
+                    });
+                }
+            } catch (e) {
+                console.error('Error selecting random client:', e);
+                alert('Ошибка выбора случайного пользователя');
+            }
+        }
+
+        async function loadClients() {
+            try {
+                const search = document.getElementById('clientSearch').value.toLowerCase();
+                const sort = document.getElementById('clientSort').value;
+
+                const res = await fetch('/api/admin/clients', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                let clients = await res.json();
+                clients = clients.data || [];
+
+                if (search) {
+                    clients = clients.filter(c => 
+                        c.name?.toLowerCase().includes(search) || 
+                        c.phone?.includes(search)
+                    );
+                }
+
+                if (sort === 'balance') clients.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+                if (sort === 'orders') clients.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
+
+                const html = clients.map(c => `
+                    <div class="client-card">
+                        <div class="client-name">${c.name || c.first_name || c.username || `User #${c.telegram_id || c.id}`}</div>
+                        <div class="client-info">
+                            <span>☎️ ${c.phone || 'Не указан'}</span>
+                            <span class="client-balance">${c.balance || 0}₽</span>
+                        </div>
+                        <div class="client-info">
+                            <span>Заказов: ${c.orderCount || 0}</span>
+                            ${c.telegram_id ? `<span>ID: ${c.telegram_id}</span>` : ''}
+                        </div>
+                        <div class="client-actions">
+                            ${c.telegram_id ? `<button class="btn btn-success" onclick="contactClientDirect(${c.telegram_id})" title="Связаться в Telegram">💬</button>` : ''}
+                            <button class="btn btn-primary" onclick="showClientModal(${c.id})">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteClientDirect(${c.id})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('clientsList').innerHTML = html || '<p style="text-align:center;color:#999;">Клиентов нет</p>';
+            } catch (e) {
+                console.error('Error loading clients:', e);
+            }
+        }
+
+        function showClientModal(clientId) {
+            fetch('/api/admin/clients', {
+                headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+            })
+            .then(r => r.json())
+            .then(data => {
+                const client = data.data.find(c => c.id === clientId);
+                if (client) {
+                    currentClient = client;
+                    document.getElementById('clientName').value = client.name || client.first_name || '';
+                    document.getElementById('clientPhone').value = client.phone || '';
+                    document.getElementById('clientBalance').value = client.balance || 0;
+                    document.getElementById('clientTelegramId').value = client.telegram_id || 'Не указан';
+                    
+                    // Показать/скрыть кнопку связаться в зависимости от наличия telegram_id
+                    const contactBtn = document.getElementById('contactClientBtn');
+                    if (client.telegram_id) {
+                        contactBtn.style.display = 'block';
+                    } else {
+                        contactBtn.style.display = 'none';
+                    }
+                    
+                    // Обновить кнопку бана
+                    const banBtn = document.getElementById('banClientBtn');
+                    if (client.is_banned) {
+                        banBtn.textContent = '✅ Разбанить';
+                        banBtn.style.background = '#4caf50';
+                    } else {
+                        banBtn.textContent = '🚫 Забанить';
+                        banBtn.style.background = '#ff9800';
+                    }
+                    
+                    openModal('clientModal');
+                }
+            });
+        }
+        
+        function contactClient() {
+            if (!currentClient || !currentClient.telegram_id) {
+                alert('У клиента не указан Telegram ID');
+                return;
+            }
+            
+            // Открыть чат с пользователем в Telegram
+            const telegramUrl = `tg://openmessage?user_id=${currentClient.telegram_id}`;
+            window.location.href = telegramUrl;
+        }
+
+        async function saveClient() {
+            if (!currentClient) return;
+
+            try {
+                await fetch(`/api/admin/clients/${currentClient.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify({
+                        name: document.getElementById('clientName').value,
+                        phone: document.getElementById('clientPhone').value,
+                        balance: parseFloat(document.getElementById('clientBalance').value) || 0
+                    })
+                });
+                closeModal('clientModal');
+                loadClients();
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        async function deleteClient() {
+            if (!currentClient || !confirm('Удалить клиента?')) return;
+
+            try {
+                await fetch(`/api/admin/clients/${currentClient.id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                closeModal('clientModal');
+                loadClients();
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        async function deleteClientDirect(clientId) {
+            if (!confirm('Удалить клиента?')) return;
+
+            try {
+                await fetch(`/api/admin/clients/${clientId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                loadClients();
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        async function resetClientBalance() {
+            if (!currentClient || !confirm('Сбросить баланс клиента до 0₽?')) return;
+
+            try {
+                const res = await fetch(`/api/admin/users/${currentClient.id}/reset-balance`, {
+                    method: 'POST',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('Баланс сброшен!');
+                    document.getElementById('clientBalance').value = 0;
+                    currentClient.balance = 0;
+                    loadClients();
+                } else {
+                    alert('Ошибка сброса баланса');
+                }
+            } catch (e) {
+                console.error('Error:', e);
+                alert('Ошибка сброса баланса');
+            }
+        }
+
+        async function toggleBanClient() {
+            if (!currentClient) return;
+
+            const isBanned = currentClient.is_banned;
+            const action = isBanned ? 'unban' : 'ban';
+            const confirmText = isBanned ? 'Разбанить клиента?' : 'Забанить клиента?';
+            
+            if (!confirm(confirmText)) return;
+
+            try {
+                const res = await fetch(`/api/admin/users/${currentClient.id}/${action}`, {
+                    method: 'POST',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentClient.is_banned = !isBanned;
+                    alert(isBanned ? 'Клиент разбанен!' : 'Клиент забанен!');
+                    
+                    // Обновить кнопку
+                    const banBtn = document.getElementById('banClientBtn');
+                    if (currentClient.is_banned) {
+                        banBtn.textContent = '✅ Разбанить';
+                        banBtn.style.background = '#4caf50';
+                    } else {
+                        banBtn.textContent = '🚫 Забанить';
+                        banBtn.style.background = '#ff9800';
+                    }
+                    
+                    loadClients();
+                } else {
+                    alert('Ошибка изменения статуса бана');
+                }
+            } catch (e) {
+                console.error('Error:', e);
+                alert('Ошибка изменения статуса бана');
+            }
+        }
+        
+        function contactClientDirect(telegramId) {
+            if (!telegramId) {
+                alert('У клиента не указан Telegram ID');
+                return;
+            }
+            
+            const message = prompt('Введите сообщение для клиента (или оставьте пустым для открытия чата):');
+            
+            if (message === null) return; // Отменено
+            
+            // Если есть сообщение - открываем с текстом, иначе просто чат
+            const encodedMessage = message ? encodeURIComponent(message) : '';
+            const telegramUrl = message 
+                ? `https://t.me/@id${telegramId}?text=${encodedMessage}`
+                : `tg://openmessage?user_id=${telegramId}`;
+            
+            window.open(telegramUrl, '_blank');
+        }
+
+        // ============ ТОВАРЫ ============
+        let currentViewMode = 'grouped'; // 'variants' или 'grouped'
+        
+        async function loadProducts() {
+            if (currentViewMode === 'grouped') {
+                await loadProductsGrouped();
+            } else {
+                await loadProductsVariants();
+            }
+        }
+        
+        async function loadProductsVariants() {
+            try {
+                const search = document.getElementById('productSearch').value.toLowerCase();
+
+                const res = await fetch('/api/admin/product-variants', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                let variants = await res.json();
+                variants = variants.data || [];
+
+                if (search) {
+                    variants = variants.filter(v => 
+                        v.name?.toLowerCase().includes(search) || 
+                        v.brand?.toLowerCase().includes(search) ||
+                        v.flavor?.toLowerCase().includes(search)
+                    );
+                }
+
+                const html = variants.map(v => `
+                    <div class="product-card">
+                        <div class="product-header">
+                            <div class="product-image" onclick="showPhotoModal(${v.product_id}, '${v.name}')">
+                                ${v.image_url ? `<img src="${v.image_url}" alt="">` : '🖼️'}
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">${v.name} ${v.brand ? `(${v.brand})` : ''}</div>
+                                <div class="product-price">${v.price}₽</div>
+                                <div class="product-qty">Вкус: ${v.flavor}</div>
+                                <div class="product-qty">Кол-во: ${v.quantity} шт</div>
+                                <div class="product-qty" style="font-size: 10px; color: #999;">ID товара: ${v.product_id} | ID варианта: ${v.id}</div>
+                            </div>
+                        </div>
+                        <div class="product-actions">
+                            <button onclick="showEditMainProductModal(${v.product_id})" style="background: #4CAF50; color: white;">✏️ Товар</button>
+                            <button onclick="showEditVariantModal(${v.id})">✏️ Вариант</button>
+                            <button onclick="deleteVariant(${v.id})" style="background: #f44336; color: white;">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('productsList').innerHTML = html || '<p style="text-align:center;color:#999;">Товаров нет</p>';
+            } catch (e) {
+                console.error('Error loading products:', e);
+            }
+        }
+        
+        async function loadProductsGrouped() {
+            try {
+                const search = document.getElementById('productSearch').value.toLowerCase();
+                
+                const res = await fetch('/api/admin/products-grouped', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                const data = await res.json();
+                let grouped = data.data || [];
+                
+                // Фильтрация по поиску
+                if (search) {
+                    grouped = grouped.map(brandGroup => ({
+                        ...brandGroup,
+                        products: brandGroup.products.filter(product => 
+                            product.name.toLowerCase().includes(search) ||
+                            product.brand?.toLowerCase().includes(search) ||
+                            product.description?.toLowerCase().includes(search) ||
+                            product.variants.some(v => v.flavor?.toLowerCase().includes(search))
+                        )
+                    })).filter(brandGroup => brandGroup.products.length > 0);
+                }
+                
+                const html = grouped.map(brandGroup => `
+                    <div class="brand-group" style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px;">
+                        <div class="brand-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                            <h3 style="margin: 0; color: #333;">${brandGroup.brand}</h3>
+                            <span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${brandGroup.products.length} товаров</span>
+                        </div>
+                        <div class="brand-products">
+                            ${brandGroup.products.map(product => `
+                                <div class="product-card-grouped" style="margin-bottom: 15px; padding: 10px; border: 1px solid #f0f0f0; border-radius: 6px;">
+                                    <div class="product-header" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                        <div class="product-image" onclick="showPhotoModal(${product.id}, '${product.name}')" style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; overflow: hidden; flex-shrink: 0;">
+                                            ${product.image_url ? `<img src="${product.image_url}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">` : '🖼️'}
+                                        </div>
+                                        <div class="product-info" style="flex: 1;">
+                                            <div class="product-name" style="font-weight: 600; margin-bottom: 5px;">
+                                                ${product.name} 
+                                                <span style="font-size: 11px; color: #999; font-weight: normal;">[ID: ${product.id}]</span>
+                                                ${product.variants.some(v => v.quantity === 0) ? '<span style="background: #f44336; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 6px;">⚠️ НЕТ В НАЛИЧИИ</span>' : ''}
+                                                ${product.variants.some(v => v.quantity > 0 && v.quantity <= 5) && !product.variants.some(v => v.quantity === 0) ? '<span style="background: #ff9800; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 6px;">⚠️ МАЛО</span>' : ''}
+                                            </div>
+                                            <div class="product-description" style="font-size: 12px; color: #666; margin-bottom: 8px;">${product.description || 'Без описания'}</div>
+                                            <div class="product-variants" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                                <strong style="font-size: 12px; color: #333;">Вкусы (${product.variants.length}):</strong>
+                                                ${product.variants.map(v => {
+                                                    const isLowStock = v.quantity > 0 && v.quantity <= 5;
+                                                    const isOutOfStock = v.quantity === 0;
+                                                    const bgColor = isOutOfStock ? '#ffebee' : (isLowStock ? '#fff3e0' : '#e3f2fd');
+                                                    const textColor = isOutOfStock ? '#c62828' : (isLowStock ? '#ef6c00' : '#1976d2');
+                                                    const borderColor = isOutOfStock ? '#ef5350' : (isLowStock ? '#ffb74d' : '#bbdefb');
+                                                    const warning = isOutOfStock ? '⚠️ ' : (isLowStock ? '⚠️ ' : '');
+                                                    
+                                                    return `
+                                                    <span class="variant-tag" style="background: ${bgColor}; color: ${textColor}; padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid ${borderColor}; display: inline-flex; align-items: center; gap: 4px; ${isLowStock || isOutOfStock ? 'font-weight: 600;' : ''}">
+                                                        <span onclick="showEditVariantModal(${v.id})" style="cursor: pointer;">${warning}${v.flavor} (${v.quantity}шт)</span>
+                                                        <button onclick="event.stopPropagation(); deleteVariant(${v.id})" style="background: #f44336; color: white; border: none; border-radius: 3px; width: 16px; height: 16px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Удалить вкус">×</button>
+                                                    </span>
+                                                    `;
+                                                }).join('')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="product-actions" style="display: flex; gap: 8px;">
+                                        <button onclick="showEditMainProductModal(${product.id})" style="background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">✏️ Товар</button>
+                                        <button onclick="addVariantForProduct(${product.id})" style="background: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">+ Вкус</button>
+                                        <button onclick="deleteProduct(${product.id})" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('productsList').innerHTML = html || '<p style="text-align:center;color:#999;">Товаров нет</p>';
+            } catch (e) {
+                console.error('Error loading grouped products:', e);
+            }
+        }
+        
+        function toggleViewMode() {
+            currentViewMode = currentViewMode === 'variants' ? 'grouped' : 'variants';
+            const btn = document.getElementById('viewModeBtn');
+            btn.textContent = currentViewMode === 'variants' ? '📋 По брендам' : '📝 По вариантам';
+            loadProducts();
+        }
+        
+        function addVariantForProduct(productId) {
+            document.getElementById('variantProductId').value = productId;
+            openModal('addVariantModal');
+        }
+        
+        async function deleteProduct(productId) {
+            if (!confirm('Удалить товар и все его варианты?')) return;
+            
+            try {
+                await fetch(`/api/admin/products/${productId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                loadProducts();
+                alert('Товар удален!');
+            } catch (e) {
+                console.error('Error deleting product:', e);
+                alert('Ошибка при удалении товара');
+            }
+        }
+
+        async function clearOrdersData() {
+            if (!confirm('⚠️ ВНИМАНИЕ!\n\nЭто удалит ВСЕ заказы из базы данных!\nДействие НЕОБРАТИМО!\n\nПродолжить?')) return;
+            
+            if (!confirm('Вы уверены? Все заказы будут удалены навсегда!')) return;
+            
+            try {
+                const res = await fetch('/api/admin/orders/clear-all', {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(`✅ Удалено заказов: ${data.deleted_count}`);
+                    loadDashboard(); // Обновить статистику
+                } else {
+                    alert('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            } catch (e) {
+                console.error('Error clearing orders:', e);
+                alert('❌ Ошибка при удалении заказов');
+            }
+        }
+
+        function showPhotoModal(productId, productName) {
+            currentProduct = productId;
+            document.getElementById('photoModalTitle').textContent = `Фото: ${productName}`;
+            document.getElementById('photoUrl').value = '';
+            document.getElementById('photoFile').value = '';
+            document.getElementById('photoPreview').innerHTML = '📷';
+            openModal('photoModal');
+        }
+
+        function previewPhoto() {
+            const url = document.getElementById('photoUrl').value;
+            const file = document.getElementById('photoFile').files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}">`;
+                };
+                reader.readAsDataURL(file);
+            } else if (url) {
+                document.getElementById('photoPreview').innerHTML = `<img src="${url}">`;
+            }
+        }
+
+        async function saveProductPhoto() {
+            if (!currentProduct) return;
+
+            const url = document.getElementById('photoUrl').value;
+            const file = document.getElementById('photoFile').files[0];
+
+            if (!url && !file) {
+                alert('Выберите фото');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('productId', currentProduct);
+
+                if (file) {
+                    formData.append('file', file);
+                } else {
+                    formData.append('imageUrl', url);
+                }
+
+                await fetch('/api/admin/product-photos', {
+                    method: 'POST',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') },
+                    body: formData
+                });
+
+                closeModal('photoModal');
+                loadProducts();
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        async function deleteProductPhoto(productId) {
+            if (!confirm('Удалить фото?')) return;
+
+            try {
+                await fetch(`/api/admin/product-photos/${productId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                loadProducts();
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        // ============ РЕДАКТИРОВАНИЕ ВАРИАНТА ============
+        async function showEditVariantModal(variantId) {
+            try {
+                const res = await fetch('/api/admin/product-variants', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                const response = await res.json();
+                
+                if (!response || !response.data) {
+                    throw new Error('Invalid response from server');
+                }
+                
+                const variant = response.data.find(v => v.id === variantId);
+                
+                if (variant) {
+                    currentProductForEdit = variant;
+                    document.getElementById('productFlavor').value = variant.flavor || '';
+                    // Цена теперь не на варианте - убираем эти поля или берем из товара
+                    document.getElementById('productQuantity').value = variant.quantity || 0;
+                    openModal('editProductModal');
+                }
+            } catch (e) {
+                console.error('Error:', e);
+                alert('Ошибка при загрузке варианта: ' + e.message);
+            }
+        }
+
+        async function saveProduct() {
+            if (!currentProductForEdit) return;
+
+            const flavor = document.getElementById('productFlavor').value.trim();
+            const quantity = parseInt(document.getElementById('productQuantity').value);
+            
+            if (!flavor) {
+                alert('Укажите вкус');
+                return;
+            }
+
+            try {
+                await fetch(`/api/admin/product-variants/${currentProductForEdit.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify({
+                        flavor: flavor,
+                        quantity: quantity
+                    })
+                });
+                closeModal('editProductModal');
+                loadProducts();
+                alert('✅ Вариант обновлен!');
+            } catch (e) {
+                console.error('Error:', e);
+                alert('Ошибка при сохранении варианта');
+            }
+        }
+
+        async function deleteVariant(variantId) {
+            if (!confirm('Удалить этот вариант товара?')) return;
+
+            try {
+                await fetch(`/api/admin/product-variants/${variantId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                loadProducts();
+            } catch (e) {
+                console.error('Error:', e);
+                alert('Ошибка при удалении варианта');
+            }
+        }
+
+        // ============ РЕДАКТИРОВАНИЕ ОСНОВНОГО ТОВАРА ============
+        
+        let currentMainProductId = null;
+
+        async function showEditMainProductModal(productId) {
+            currentMainProductId = productId;
+            
+            try {
+                const res = await fetch(`/api/admin/products/${productId}`, {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
+                const data = await res.json();
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Ошибка получения данных');
+                }
+                
+                const product = data.data;
+                
+                if (!product) {
+                    throw new Error('Товар не найден');
+                }
+                
+                document.getElementById('mainProductName').value = product.name || '';
+                document.getElementById('mainProductBrand').value = product.brand || '';
+                document.getElementById('mainProductDescription').value = product.description || '';
+                document.getElementById('mainProductStrength').value = product.strength || '';
+                document.getElementById('mainProductVolume').value = product.volume || '';
+                document.getElementById('mainProductBattery').value = product.battery || '';
+                document.getElementById('mainProductPuffs').value = product.puffs || '';
+                document.getElementById('mainProductPrice').value = product.price || product.base_price || '';
+                document.getElementById('mainProductOldPrice').value = product.old_price || '';
+                document.getElementById('mainProductCostPrice').value = product.cost_price || '';
+                document.getElementById('mainProductIsHot').checked = product.is_hot || false;
+                
+                // Обновить предпросмотр скидки
+                updateDiscountPreview();
+                
+                // Загрузить изображения товара
+                await loadProductImages();
+                
+                openModal('editMainProductModal');
+            } catch (e) {
+                console.error('Error loading product:', e);
+                alert(`Ошибка при загрузке товара: ${e.message}`);
+            }
+        }
+
+        async function saveMainProduct() {
+            if (!currentMainProductId) return;
+            
+            const price = parseFloat(document.getElementById('mainProductPrice').value);
+            const oldPrice = parseFloat(document.getElementById('mainProductOldPrice').value);
+            
+            if (!price || price <= 0) {
+                alert('Укажите текущую цену товара');
+                return;
+            }
+            
+            const costPrice = parseFloat(document.getElementById('mainProductCostPrice').value);
+            
+            const data = {
+                name: document.getElementById('mainProductName').value,
+                brand: document.getElementById('mainProductBrand').value,
+                description: document.getElementById('mainProductDescription').value,
+                price: price,
+                old_price: oldPrice && oldPrice > price ? oldPrice : null,
+                cost_price: costPrice > 0 ? costPrice : 0,
+                strength: document.getElementById('mainProductStrength').value || null,
+                volume: document.getElementById('mainProductVolume').value || null,
+                battery: document.getElementById('mainProductBattery').value || null,
+                puffs: document.getElementById('mainProductPuffs').value || null,
+                is_hot: document.getElementById('mainProductIsHot').checked
+            };
+            
+            try {
+                await fetch(`/api/admin/products/${currentMainProductId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                closeModal('editMainProductModal');
+                loadProducts();
+                alert('Товар успешно обновлен!');
+            } catch (e) {
+                console.error('Error updating product:', e);
+                alert('Ошибка при обновлении товара');
+            }
+        }
+
+        // Функция для обновления предпросмотра скидки
+        function updateDiscountPreview() {
+            const price = parseFloat(document.getElementById('mainProductPrice').value);
+            const oldPrice = parseFloat(document.getElementById('mainProductOldPrice').value);
+            const preview = document.getElementById('discountPreview');
+            
+            if (oldPrice && oldPrice > price && price > 0) {
+                const discountPercent = Math.round(((oldPrice - price) / oldPrice) * 100);
+                
+                document.getElementById('previewOldPrice').textContent = oldPrice + '₽';
+                document.getElementById('previewPrice').textContent = price + '₽';
+                document.getElementById('previewDiscount').textContent = '-' + discountPercent + '%';
+                
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        // ======================
+        // УПРАВЛЕНИЕ ИЗОБРАЖЕНИЯМИ
+        // ======================
+        let productImages = []; // Текущие изображения товара
+
+        async function loadProductImages() {
+            if (!currentMainProductId) return;
+            
+            try {
+                const res = await fetch(`/api/products/${currentMainProductId}/images`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    productImages = data.images || [];
+                    renderProductImages();
+                }
+            } catch (e) {
+                console.error('Error loading product images:', e);
+            }
+        }
+
+        function renderProductImages() {
+            const container = document.getElementById('productImagesContainer');
+            
+            if (productImages.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 12px; padding: 10px;">Нет изображений</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="product-images-list">
+                    ${productImages.map((img, index) => `
+                        <div class="product-image-item" data-image-id="${img.id}">
+                            <div class="image-order">#${index + 1}</div>
+                            <img src="${img.image_url}" alt="Изображение ${index + 1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3E✕%3C/text%3E%3C/svg%3E'">
+                            <div class="image-info">${img.image_url}</div>
+                            <div class="image-actions">
+                                ${index > 0 ? `<button class="btn-sm btn-secondary" onclick="moveImageUp(${img.id}, ${index})">↑</button>` : ''}
+                                ${index < productImages.length - 1 ? `<button class="btn-sm btn-secondary" onclick="moveImageDown(${img.id}, ${index})">↓</button>` : ''}
+                                <button class="btn-sm btn-danger" onclick="deleteProductImage(${img.id})">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function addProductImage() {
+            const url = document.getElementById('newImageUrl').value.trim();
+            
+            if (!url) {
+                alert('Введите URL изображения');
+                return;
+            }
+            
+            if (!currentMainProductId) {
+                alert('Сначала сохраните товар');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/admin/products/images', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify({
+                        product_id: currentMainProductId,
+                        image_url: url,
+                        display_order: productImages.length
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('newImageUrl').value = '';
+                    await loadProductImages();
+                } else {
+                    alert('Ошибка добавления изображения');
+                }
+            } catch (e) {
+                console.error('Error adding image:', e);
+                alert('Ошибка добавления изображения');
+            }
+        }
+
+        async function deleteProductImage(imageId) {
+            if (!confirm('Удалить изображение?')) return;
+            
+            try {
+                const res = await fetch(`/api/admin/products/images/${imageId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    }
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    await loadProductImages();
+                } else {
+                    alert('Ошибка удаления изображения');
+                }
+            } catch (e) {
+                console.error('Error deleting image:', e);
+                alert('Ошибка удаления изображения');
+            }
+        }
+
+        async function moveImageUp(imageId, currentIndex) {
+            if (currentIndex === 0) return;
+            
+            const updatedImages = productImages.map((img, idx) => {
+                if (idx === currentIndex) {
+                    return { id: img.id, display_order: currentIndex - 1 };
+                } else if (idx === currentIndex - 1) {
+                    return { id: img.id, display_order: currentIndex };
+                } else {
+                    return { id: img.id, display_order: idx };
+                }
+            });
+            
+            await updateImagesOrder(updatedImages);
+        }
+
+        async function moveImageDown(imageId, currentIndex) {
+            if (currentIndex === productImages.length - 1) return;
+            
+            const updatedImages = productImages.map((img, idx) => {
+                if (idx === currentIndex) {
+                    return { id: img.id, display_order: currentIndex + 1 };
+                } else if (idx === currentIndex + 1) {
+                    return { id: img.id, display_order: currentIndex };
+                } else {
+                    return { id: img.id, display_order: idx };
+                }
+            });
+            
+            await updateImagesOrder(updatedImages);
+        }
+
+        async function updateImagesOrder(imagesData) {
+            try {
+                const res = await fetch('/api/admin/products/images/reorder', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify({ images: imagesData })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    await loadProductImages();
+                } else {
+                    alert('Ошибка изменения порядка изображений');
+                }
+            } catch (e) {
+                console.error('Error updating images order:', e);
+                alert('Ошибка изменения порядка изображений');
+            }
+        }
+
+        async function addMultipleProductImages() {
+            const text = document.getElementById('multipleImagesInput').value.trim();
+            
+            if (!text) {
+                alert('Введите URL изображений');
+                return;
+            }
+            
+            if (!currentMainProductId) {
+                alert('Сначала сохраните товар');
+                return;
+            }
+            
+            // Разделить по переносам строк или запятым
+            const urls = text.split(/[\n,]+/)
+                .map(url => url.trim())
+                .filter(url => url.length > 0 && url.startsWith('http'));
+            
+            if (urls.length === 0) {
+                alert('Не найдено валидных URL');
+                return;
+            }
+            
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (let i = 0; i < urls.length; i++) {
+                try {
+                    const res = await fetch('/api/admin/products/images', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                        },
+                        body: JSON.stringify({
+                            product_id: currentMainProductId,
+                            image_url: urls[i],
+                            display_order: productImages.length + i
+                        })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } catch (e) {
+                    console.error('Error adding image:', e);
+                    failCount++;
+                }
+            }
+            
+            document.getElementById('multipleImagesInput').value = '';
+            await loadProductImages();
+            
+            if (failCount > 0) {
+                alert(`Добавлено: ${successCount}\\nОшибок: ${failCount}`);
+            } else {
+                alert(`Успешно добавлено ${successCount} изображений!`);
+            }
+        }
+
+        function openAddVariantModal() {
+            document.getElementById('variantProductId').value = '';
+            document.getElementById('variantFlavor').value = '';
+            document.getElementById('variantPrice').value = '';
+            document.getElementById('variantQuantity').value = '';
+            openModal('addVariantModal');
+        }
+
+        async function createVariant() {
+            const productId = parseInt(document.getElementById('variantProductId').value);
+            const flavor = document.getElementById('variantFlavor').value.trim();
+            const price = parseFloat(document.getElementById('variantPrice').value);
+            const quantity = parseInt(document.getElementById('variantQuantity').value);
+
+            if (!productId || !flavor || !price || !quantity) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            try {
+                await fetch('/api/admin/product-variants', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        flavor: flavor,
+                        price: price,
+                        quantity: quantity
+                    })
+                });
+                closeModal('addVariantModal');
+                loadProducts();
+            } catch (e) {
+                console.error('Error:', e);
+                alert('Ошибка при создании варианта. Проверьте, что ID товара существует.');
+            }
+        }
+
+        // ============ ПРОМОКОДЫ ============
+        async function loadPromos() {
+            try {
+                const res = await fetch('/api/admin/promocodes', {
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                const promos = await res.json();
+
+                const html = (promos.data || []).map(p => `
+                    <div class="promo-card">
+                        <div class="promo-code">${p.code}</div>
+                        <div class="promo-info">
+                            <span class="promo-label">Тип:</span>
+                            <span class="promo-value">${p.type === 'percent' ? '%' : p.type === 'rub' ? '₽' : 'Баланс'}</span>
+                        </div>
+                        <div class="promo-info">
+                            <span class="promo-label">Значение:</span>
+                            <span class="promo-value">${p.value}</span>
+                        </div>
+                        <div class="promo-info">
+                            <span class="promo-label">Использован:</span>
+                            <span class="promo-value">${p.current_uses}/${p.max_uses === -1 ? '∞' : p.max_uses}</span>
+                        </div>
+                        <button class="btn btn-danger" style="width: 100%; margin-top: 10px;" onclick="deletePromo(${p.id})">
+                            Удалить
+                        </button>
+                    </div>
+                `).join('');
+
+                document.getElementById('promosList').innerHTML = html || '<p style="text-align:center;color:#999;">Промокодов нет</p>';
+            } catch (e) {
+                console.error('Error loading promos:', e);
+            }
+        }
+
+        function updatePromoValuePlaceholder() {
+            const type = document.getElementById('promoType').value;
+            const valueInput = document.getElementById('promoValue');
+            const valueUnit = document.getElementById('promoValueUnit');
+            const valueHint = document.getElementById('promoValueHint');
+            
+            if (type === 'percent') {
+                valueInput.placeholder = '10';
+                valueUnit.textContent = '(в %)';
+                valueUnit.style.color = '#4CAF50';
+                valueHint.textContent = 'Например: 10 = скидка 10%';
+            } else if (type === 'rub') {
+                valueInput.placeholder = '100';
+                valueUnit.textContent = '(в ₽)';
+                valueUnit.style.color = '#FF9800';
+                valueHint.textContent = 'Например: 100 = скидка 100 рублей';
+            } else if (type === 'balance') {
+                valueInput.placeholder = '500';
+                valueUnit.textContent = '(в ₽)';
+                valueUnit.style.color = '#2196F3';
+                valueHint.textContent = 'Например: 500 = пополнение баланса на 500 рублей';
+            }
+        }
+
+        function openPromoModal() {
+            document.getElementById('promoCode').value = '';
+            document.getElementById('promoType').value = 'percent';
+            document.getElementById('promoValue').value = '';
+            document.getElementById('promoMaxUses').value = '-1';
+            document.getElementById('promoMaxUsesCustom').style.display = 'none';
+            document.getElementById('promoMaxUsesCustom').value = '';
+            updatePromoValuePlaceholder(); // Обновляем подсказки
+            openModal('promoModal');
+        }
+        
+        // Обработчик изменения количества использований
+        document.addEventListener('DOMContentLoaded', () => {
+            const maxUsesSelect = document.getElementById('promoMaxUses');
+            const maxUsesCustom = document.getElementById('promoMaxUsesCustom');
+            
+            if (maxUsesSelect) {
+                maxUsesSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'custom') {
+                        maxUsesCustom.style.display = 'block';
+                    } else {
+                        maxUsesCustom.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        async function createPromo() {
+            const code = document.getElementById('promoCode').value.toUpperCase();
+            const type = document.getElementById('promoType').value;
+            const value = document.getElementById('promoValue').value;
+            
+            let maxUses = document.getElementById('promoMaxUses').value;
+            if (maxUses === 'custom') {
+                maxUses = document.getElementById('promoMaxUsesCustom').value;
+            }
+            maxUses = parseInt(maxUses);
+
+            if (!code || !value) {
+                alert('Заполните все поля');
+                return;
+            }
+            
+            if (maxUses === 'custom' && !document.getElementById('promoMaxUsesCustom').value) {
+                alert('Укажите количество использований');
+                return;
+            }
+
+            try {
+                await fetch('/api/admin/promocodes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify({ code, type, value, maxUses })
+                });
+                closeModal('promoModal');
+                loadPromos();
+            } catch (e) {
+                console.error('Error:', e);
+                alert('Ошибка при создании промокода');
+            }
+        }
+
+        async function deletePromo(promoId) {
+            if (!confirm('Удалить промокод?')) return;
+
+            try {
+                await fetch(`/api/admin/promocodes/${promoId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                loadPromos();
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        // ============ СОЗДАНИЕ ТОВАРА ============
+        async function openAddProductModal() {
+            // Очистить форму
+            document.getElementById('newProductName').value = '';
+            document.getElementById('newProductBrand').value = '';
+            document.getElementById('newProductCategory').value = '';
+            document.getElementById('newProductDescription').value = '';
+            document.getElementById('newProductImage').value = '';
+            document.getElementById('newProductPrice').value = '';
+            document.getElementById('newProductStrength').value = '';
+            document.getElementById('newProductVolume').value = '';
+            document.getElementById('newProductBattery').value = '';
+            document.getElementById('newProductPuffs').value = '';
+            document.getElementById('newProductIsHot').checked = false;
+            document.getElementById('newProductImagePreview').innerHTML = '';
+            
+            // Загрузить категории в select
+            try {
+                const res = await fetch('/api/categories');
+                const data = await res.json();
+                const categories = data.data || data.categories || [];
+                
+                const select = document.getElementById('newProductCategory');
+                select.innerHTML = '<option value="">Выберите категорию</option>';
+                
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                });
+            } catch (e) {
+                console.error('Error loading categories:', e);
+            }
+            
+            openModal('addProductModal');
+        }
+
+        async function createProduct() {
+            const name = document.getElementById('newProductName').value.trim();
+            const brand = document.getElementById('newProductBrand').value.trim();
+            const category_id = parseInt(document.getElementById('newProductCategory').value);
+            const description = document.getElementById('newProductDescription').value.trim();
+            const image_url = document.getElementById('newProductImage').value.trim();
+            const base_price = parseFloat(document.getElementById('newProductPrice').value);
+            const strength = document.getElementById('newProductStrength').value.trim() || null;
+            const volume = document.getElementById('newProductVolume').value.trim() || null;
+            const battery = document.getElementById('newProductBattery').value.trim() || null;
+            const puffs = document.getElementById('newProductPuffs').value.trim() || null;
+            const is_hot = document.getElementById('newProductIsHot').checked;
+            
+            // Валидация
+            if (!name) {
+                alert('Введите название товара');
+                return;
+            }
+            if (!brand) {
+                alert('Введите бренд');
+                return;
+            }
+            if (!category_id) {
+                alert('Выберите категорию');
+                return;
+            }
+            if (!base_price || base_price <= 0) {
+                alert('Введите корректную цену');
+                return;
+            }
+            
+            const data = {
+                name,
+                brand,
+                category_id,
+                description: description || null,
+                image_url: image_url || null,
+                base_price,
+                strength,
+                volume,
+                battery,
+                puffs,
+                is_hot
+            };
+            
+            try {
+                const res = await fetch('/api/admin/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await res.json();
+                
+                if (res.ok && result.success) {
+                    alert(`✅ Товар создан!\n\nID: ${result.product_id}\n\nТеперь добавьте варианты (вкусы) для этого товара.`);
+                    closeModal('addProductModal');
+                    loadProducts();
+                } else {
+                    alert('Ошибка: ' + (result.message || 'Неизвестная ошибка'));
+                }
+            } catch (e) {
+                console.error('Error creating product:', e);
+                alert('Ошибка при создании товара');
+            }
+        }
+
+        // Preview для нового товара
+        document.addEventListener('DOMContentLoaded', () => {
+            const newProductImageInput = document.getElementById('newProductImage');
+            if (newProductImageInput) {
+                newProductImageInput.addEventListener('input', (e) => {
+                    const url = e.target.value.trim();
+                    const preview = document.getElementById('newProductImagePreview');
+                    
+                    if (url) {
+                        preview.innerHTML = `<img src="${url}" style="max-width: 100%; border-radius: 8px;" onerror="this.style.display='none'">`;
+                    } else {
+                        preview.innerHTML = '';
+                    }
+                });
+            }
+        });
+
+        // ============ КАТЕГОРИИ ============
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/categories');
+                const data = await res.json();
+                const categories = data.data || data.categories || [];
+                
+                let html = '';
+                
+                if (categories.length === 0) {
+                    html = '<p style="text-align: center; color: #999;">Категории не найдены</p>';
+                } else {
+                    html = '<div style="display: grid; gap: 15px;">';
+                    
+                    categories.forEach(cat => {
+                        html += `
+                            <div style="background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                                    ${cat.image_url ? `
+                                        <img src="${cat.image_url}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;">
+                                    ` : `
+                                        <div style="width: 60px; height: 60px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 32px;">
+                                            ${cat.icon || '📁'}
+                                        </div>
+                                    `}
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 5px;">${cat.name}</div>
+                                        <div style="font-size: 12px; color: #999;">ID: ${cat.id}</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="editCategory(${cat.id})" style="flex: 1; background: #4CAF50; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer;">
+                                        ✏️ Изменить
+                                    </button>
+                                    <button onclick="deleteCategory(${cat.id})" style="flex: 1; background: #f44336; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer;">
+                                        🗑️ Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                }
+                
+                document.getElementById('categoriesList').innerHTML = html;
+            } catch (e) {
+                console.error('Error loading categories:', e);
+                document.getElementById('categoriesList').innerHTML = '<p style="text-align: center; color: red;">Ошибка загрузки</p>';
+            }
+        }
+
+        function openCategoryModal() {
+            currentCategory = null;
+            document.getElementById('categoryModalTitle').textContent = 'Добавить категорию';
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categoryIcon').value = '';
+            document.getElementById('categoryImage').value = '';
+            document.getElementById('categoryOrder').value = '1';
+            document.getElementById('categoryCashback').value = '3.0';
+            document.getElementById('categoryImagePreview').innerHTML = '';
+            openModal('categoryModal');
+        }
+
+        async function editCategory(categoryId) {
+            try {
+                const res = await fetch('/api/categories');
+                const data = await res.json();
+                const categories = data.data || data.categories || [];
+                const category = categories.find(c => c.id === categoryId);
+                
+                if (!category) {
+                    alert('Категория не найдена');
+                    return;
+                }
+                
+                currentCategory = categoryId;
+                document.getElementById('categoryModalTitle').textContent = 'Редактировать категорию';
+                document.getElementById('categoryName').value = category.name || '';
+                document.getElementById('categoryIcon').value = category.icon || '';
+                document.getElementById('categoryImage').value = category.image_url || '';
+                document.getElementById('categoryOrder').value = category.sort_order || 1;
+                document.getElementById('categoryCashback').value = category.cashback_rate || 3.0;
+                
+                // Preview image
+                if (category.image_url) {
+                    document.getElementById('categoryImagePreview').innerHTML = 
+                        `<img src="${category.image_url}" style="max-width: 100%; border-radius: 8px;">`;
+                }
+                
+                openModal('categoryModal');
+            } catch (e) {
+                console.error('Error loading category:', e);
+                alert('Ошибка при загрузке категории');
+            }
+        }
+
+        async function saveCategory() {
+            const name = document.getElementById('categoryName').value.trim();
+            const icon = document.getElementById('categoryIcon').value.trim();
+            const image = document.getElementById('categoryImage').value.trim();
+            const order = parseInt(document.getElementById('categoryOrder').value) || 1;
+            const cashback = parseFloat(document.getElementById('categoryCashback').value) || 3.0;
+            
+            if (!name) {
+                alert('Введите название категории');
+                return;
+            }
+            
+            const data = {
+                name,
+                icon: icon || null,
+                image_url: image || null,
+                sort_order: order,
+                cashback_rate: cashback
+            };
+            
+            try {
+                if (currentCategory) {
+                    // Update
+                    await fetch(`/api/admin/categories/${currentCategory}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                        },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    // Create
+                    await fetch('/api/admin/categories', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id')
+                        },
+                        body: JSON.stringify(data)
+                    });
+                }
+                
+                closeModal('categoryModal');
+                loadCategories();
+                alert('Категория сохранена!');
+            } catch (e) {
+                console.error('Error saving category:', e);
+                alert('Ошибка при сохранении категории');
+            }
+        }
+
+        async function deleteCategory(categoryId) {
+            if (!confirm('Удалить категорию? Все товары останутся, но потеряют привязку к категории.')) return;
+            
+            try {
+                await fetch(`/api/admin/categories/${categoryId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': localStorage.getItem('admin_telegram_id') }
+                });
+                loadCategories();
+                alert('Категория удалена');
+            } catch (e) {
+                console.error('Error deleting category:', e);
+                alert('Ошибка при удалении категории');
+            }
+        }
+
+        // Preview category image
+        document.addEventListener('DOMContentLoaded', () => {
+            const categoryImageInput = document.getElementById('categoryImage');
+            if (categoryImageInput) {
+                categoryImageInput.addEventListener('input', (e) => {
+                    const url = e.target.value.trim();
+                    const preview = document.getElementById('categoryImagePreview');
+                    
+                    if (url) {
+                        preview.innerHTML = `<img src="${url}" style="max-width: 100%; border-radius: 8px;" onerror="this.style.display='none'">`;
+                    } else {
+                        preview.innerHTML = '';
+                    }
+                });
+            }
+        });
+
+        // ============ МОДАЛЬНЫЕ ОКНА ============
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // ============ СКИДКИ ============
+        
+        async function loadDiscounts() {
+            try {
+                const response = await fetch('/api/admin/discounts', {
+                    headers: { 'X-Telegram-User-Id': adminId }
+                });
+                const data = await response.json();
+                
+                const list = document.getElementById('discountsList');
+                if (!data.discounts || data.discounts.length === 0) {
+                    list.innerHTML = '<p style="text-align: center; color: #999; padding: 40px 0;">Скидки не созданы</p>';
+                    return;
+                }
+                
+                list.innerHTML = data.discounts.map(discount => {
+                    const typeNames = {
+                        'percent': '📊 Процентная',
+                        'fixed': '💰 Фиксированная',
+                        'category': '📂 Категория (%)',
+                        'category_fixed': '📂 Категория (₽)'
+                    };
+                    const typeName = typeNames[discount.type] || discount.type;
+                    const valueText = (discount.type === 'percent' || discount.type === 'category') 
+                        ? `${discount.value}%` 
+                        : `${discount.value}₽`;
+                    
+                    return `
+                        <div class="card" style="position: relative;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div style="flex: 1;">
+                                    <strong>${discount.name}</strong>
+                                    <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                                        ${typeName} · ${valueText}
+                                    </div>
+                                    ${discount.target_name ? `<div style="color: #666; font-size: 12px;">Цель: ${discount.target_name}</div>` : ''}
+                                    ${discount.min_purchase > 0 ? `<div style="color: #666; font-size: 12px;">Мин: ${discount.min_purchase}₽</div>` : ''}
+                                    <div style="color: #666; font-size: 11px; margin-top: 4px;">
+                                        Приоритет: ${discount.priority || 0}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <button 
+                                        onclick="toggleDiscount(${discount.id})" 
+                                        style="padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; background: ${discount.active ? '#4caf50' : '#999'}; color: white; font-size: 11px;">
+                                        ${discount.active ? '✓ Вкл' : 'Выкл'}
+                                    </button>
+                                    <button 
+                                        onclick="deleteDiscount(${discount.id})" 
+                                        style="padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; background: #f44336; color: white;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading discounts:', error);
+            }
+        }
+        
+        function openDiscountModal() {
+            document.getElementById('discountModal').classList.add('active');
+            document.getElementById('discountForm').reset();
+            document.getElementById('discountTargetGroup').style.display = 'none';
+        }
+        
+        function closeDiscountModal() {
+            document.getElementById('discountModal').classList.remove('active');
+        }
+        
+        // Обработка выбора типа скидки
+        document.addEventListener('DOMContentLoaded', () => {
+            const discountTypeSelect = document.getElementById('discountType');
+            if (discountTypeSelect) {
+                discountTypeSelect.addEventListener('change', function() {
+                    const targetGroup = document.getElementById('discountTargetGroup');
+                    const targetLabel = document.getElementById('discountTargetLabel');
+                    const targetSelect = document.getElementById('discountTarget');
+                    const categoryUnitGroup = document.getElementById('discountCategoryUnitGroup');
+                    
+                    if (this.value === 'category') {
+                        targetGroup.style.display = 'block';
+                        categoryUnitGroup.style.display = 'block';
+                        targetLabel.textContent = 'Категория';
+                        loadCategoriesForDiscount();
+                    } else {
+                        targetGroup.style.display = 'none';
+                        categoryUnitGroup.style.display = 'none';
+                    }
+                });
+            }
+        });
+        
+        async function loadCategoriesForDiscount() {
+            try {
+                const response = await fetch('/api/categories');
+                const data = await response.json();
+                const select = document.getElementById('discountTarget');
+                select.innerHTML = '<option value="">Выберите категорию</option>' + 
+                    (data.categories || data.data || []).map(cat => 
+                        `<option value="${cat.id}">${cat.name}</option>`
+                    ).join('');
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+        
+        async function saveDiscount() {
+            const form = document.getElementById('discountForm');
+            const formData = new FormData(form);
+            
+            let type = formData.get('type');
+            const value = parseFloat(formData.get('value'));
+            const targetId = formData.get('target_id');
+            
+            // Для скидки на категорию - проверяем выбранную единицу измерения
+            if (type === 'category') {
+                const categoryUnit = formData.get('category_unit');
+                // Если выбраны рубли, то меняем тип на category_fixed
+                if (categoryUnit === 'rub') {
+                    type = 'category_fixed';
+                }
+                // Если процент - оставляем category
+            }
+            
+            const discountData = {
+                name: formData.get('name'),
+                type: type,
+                value: value,
+                min_purchase: parseFloat(formData.get('min_purchase')) || 0,
+                priority: parseInt(formData.get('priority')) || 0,
+                description: formData.get('description') || null
+            };
+            
+            // Добавить target_id только если нужно
+            if (type === 'category' || type === 'category_fixed') {
+                if (!targetId) {
+                    alert('Выберите категорию для скидки');
+                    return;
+                }
+                discountData.target_id = parseInt(targetId);
+            }
+            
+            try {
+                const response = await fetch('/api/admin/discounts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': adminId
+                    },
+                    body: JSON.stringify(discountData)
+                });
+                
+                if (response.ok) {
+                    alert('✅ Скидка создана!');
+                    closeDiscountModal();
+                    loadDiscounts();
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка: ' + (error.detail || 'Не удалось создать скидку'));
+                }
+            } catch (error) {
+                console.error('Error saving discount:', error);
+                alert('Ошибка при сохранении скидки');
+            }
+        }
+        
+        async function toggleDiscount(id) {
+            try {
+                const response = await fetch(`/api/admin/discounts/${id}/toggle`, {
+                    method: 'POST',
+                    headers: { 'X-Telegram-User-Id': adminId }
+                });
+                
+                if (response.ok) {
+                    loadDiscounts();
+                } else {
+                    alert('Ошибка при изменении статуса скидки');
+                }
+            } catch (error) {
+                console.error('Error toggling discount:', error);
+            }
+        }
+        
+        async function deleteDiscount(id) {
+            if (!confirm('Удалить эту скидку?')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/discounts/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Telegram-User-Id': adminId }
+                });
+                
+                if (response.ok) {
+                    alert('✅ Скидка удалена');
+                    loadDiscounts();
+                } else {
+                    alert('Ошибка при удалении скидки');
+                }
+            } catch (error) {
+                console.error('Error deleting discount:', error);
+            }
+        }
+
+        // Аутентификация
+        const adminId = localStorage.getItem('admin_telegram_id');
+        if (!adminId || adminId === 'null' || adminId === 'undefined') {
+            // Редирект на страницу логина с заменой истории
+            window.location.replace('/admin_login.html');
+        }
+    </script>
+
+    <!-- Модальное окно для создания скидки -->
+    <div id="discountModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Создать скидку</span>
+                <button class="close-btn" onclick="closeDiscountModal()">✕</button>
+            </div>
+            <form id="discountForm" onsubmit="event.preventDefault(); saveDiscount();">
+                <div class="form-group">
+                    <label class="form-label">Название</label>
+                    <input type="text" name="name" class="form-input" required placeholder="Например: Скидка 15% на всё">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Тип скидки</label>
+                    <select name="type" id="discountType" class="form-input" required>
+                        <option value="">Выберите тип</option>
+                        <option value="percent">📊 Процентная (на весь заказ)</option>
+                        <option value="fixed">💰 Фиксированная (на заказ)</option>
+                        <option value="category">📂 На категорию</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Значение</label>
+                    <input type="number" name="value" class="form-input" step="0.01" required placeholder="Например: 15 или 500">
+                    <small style="color: #999;">Для процентных скидок - процент, для фиксированных - рубли</small>
+                </div>
+                
+                <div class="form-group" id="discountTargetGroup" style="display: none;">
+                    <label class="form-label" id="discountTargetLabel">Цель</label>
+                    <select name="target_id" id="discountTarget" class="form-input">
+                        <option value="">Выберите...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="discountCategoryUnitGroup" style="display: none;">
+                    <label class="form-label" style="font-size: 14px; font-weight: 600; color: #333;">
+                        📏 Единица измерения скидки
+                    </label>
+                    <select name="category_unit" id="discountCategoryUnit" class="form-input" style="font-size: 15px; font-weight: 500; padding: 12px;">
+                        <option value="percent">📊 Процент (%)</option>
+                        <option value="rub">💰 Рубли (₽)</option>
+                    </select>
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">
+                        Выберите, в чем измеряется скидка на категорию
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Минимальная сумма покупки (₽)</label>
+                    <input type="number" name="min_purchase" class="form-input" step="0.01" value="0" placeholder="0">
+                    <small style="color: #999;">Оставьте 0 если ограничения нет</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Приоритет</label>
+                    <input type="number" name="priority" class="form-input" value="0" placeholder="0">
+                    <small style="color: #999;">Чем выше число, тем раньше применится скидка</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Описание (опционально)</label>
+                    <textarea name="description" class="form-input" rows="2" placeholder="Краткое описание скидки"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Создать скидку
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

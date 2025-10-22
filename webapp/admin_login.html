@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotSpot Admin - Вход</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            padding: 14px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .login-button {
+            padding: 14px;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-info {
+            background: #f0f3f5;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .login-info-text {
+            font-size: 13px;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .login-info-text strong {
+            color: #ff6b35;
+        }
+
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            border-left: 4px solid #721c24;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #ff6b35;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #e1e8ed;
+            border-top-color: #ff6b35;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+
+            .login-title {
+                font-size: 24px;
+            }
+
+            .login-logo {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-logo">🔥</div>
+            <h1 class="login-title">HotSpot</h1>
+            <p class="login-subtitle">Администраторское управление</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="login-info">
+            <p class="login-info-text">
+                🔐 Это защищенная область для администраторов.<br>
+                Используйте ваш <strong>Telegram ID</strong> для входа.
+            </p>
+        </div>
+
+        <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label" for="telegramId">Telegram ID</label>
+                <input 
+                    type="number" 
+                    id="telegramId" 
+                    class="form-input" 
+                    placeholder="Ваш Telegram ID"
+                    required
+                    autocomplete="off"
+                >
+            </div>
+
+            <button type="submit" class="login-button">Войти</button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                Проверка...
+            </div>
+        </form>
+    </div>
+
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const telegramId = document.getElementById('telegramId').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const loadingDiv = document.getElementById('loading');
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+
+            // Очистить ошибку
+            errorMessage.style.display = 'none';
+            errorMessage.textContent = '';
+
+            // Показать загрузку
+            loadingDiv.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                // Отправить запрос проверки
+                const response = await fetch('/api/admin/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-User-Id': telegramId
+                    },
+                    body: JSON.stringify({ telegramId })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Установить токен и перенаправить
+                    sessionStorage.setItem('admin_token', telegramId);
+                    localStorage.setItem('admin_telegram_id', telegramId);
+                    
+                    // Задержка для гарантии сохранения в localStorage
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    // Проверить что сохранилось
+                    const saved = localStorage.getItem('admin_telegram_id');
+                    
+                    if (saved && saved !== 'null') {
+                        // Редирект с заменой истории
+                        window.location.replace('/admin');
+                    } else {
+                        throw new Error('Не удалось сохранить ID в localStorage');
+                    }
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'Неверный ID администратора');
+                }
+            } catch (error) {
+                errorMessage.textContent = error.message || 'Ошибка входа. Проверьте Telegram ID.';
+                errorMessage.style.display = 'block';
+                loadingDiv.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Если уже залогинен, перенаправить на панель
+        const adminId = localStorage.getItem('admin_telegram_id');
+        if (adminId && adminId !== 'null' && adminId !== 'undefined') {
+            // Редирект только если мы на странице логина
+            if (window.location.pathname === '/admin_login.html') {
+                window.location.replace('/admin');
+            }
+        }
+    </script>
+</body>
+</html>

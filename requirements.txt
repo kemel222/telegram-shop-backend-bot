@@ -1,0 +1,16 @@
+# Веб-фреймворк
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# База данных
+python-dotenv==1.0.0
+
+# Telegram боты
+aiogram==3.3.0
+aiohttp==3.9.1
+
+# Утилиты
+aiofiles==23.2.1
+requests==2.31.0
+
