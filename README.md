@@ -39,7 +39,7 @@
 
 ### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/your-username/hotspot-shop.git
+git clone https://github.com/kemel222/telegram-shop-backend-bot.git
 cd hotspot-shop
 ```
 
