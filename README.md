@@ -420,7 +420,7 @@ docker run -d \
 
 ### 📞 Контакты
 
-- 💬 **Telegram**: [@your_username](https://t.me/your_username)
+- 💬 **Telegram**: [@your_username](https://t.me/x32asm)
 - 📧 **Email**: kemelyt222@gmail.com
 - 🐛 **Issues**: [GitHub Issues](https://github.com/kemel222/telegram-shop-backend-bot/issues)
 - 💡 **Discussions**: [GitHub Discussions](https://github.com/kemel222/telegram-shop-backend-bot/discussions)
