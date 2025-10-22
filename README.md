@@ -377,35 +377,23 @@ docker run -d \
 
 ## 📸 Скриншоты
 
-### Telegram Bot
-```
-🤖 Основной интерфейс
-├── Главное меню
-├── Каталог товаров
-├── Корзина
-├── Оформление заказа
-└── Профиль пользователя
-```
+Админ бот
 
-### Web Application
-```
-🌐 Веб-приложение
-├── Главная страница
-├── Каталог с поиском
-├── Карточка товара
-├── Корзина
-└── Оформление заказа
-```
+<img width="547" height="462" alt="image" src="https://github.com/user-attachments/assets/f9851e72-6f41-4557-aae0-c257053c26ff" />
 
-### Admin Panel
-```
-👨‍💼 Админ-панель
-├── Статистика
-├── Управление товарами
-├── Обработка заказов
-├── Управление клиентами
-└── Настройки
-```
+
+Главная 
+
+<img width="628" height="917" alt="image" src="https://github.com/user-attachments/assets/9cbf9935-4dc5-4426-884c-ddbf88282595" />
+
+Профиль 
+
+<img width="611" height="951" alt="image" src="https://github.com/user-attachments/assets/ec8bc3ae-b225-4541-b3ca-752df0130fa6" />
+
+
+
+
+
 
 ---
 
