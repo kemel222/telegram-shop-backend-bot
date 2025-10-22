@@ -9,7 +9,7 @@
 
 ### 2. Клонирование
 ```bash
-git clone https://github.com/YOUR_USERNAME/hotspot-shop.git
+git clone https://github.com/kemel222/telegram-shop-backend-bot.git
 cd hotspot-shop
 ```
 
