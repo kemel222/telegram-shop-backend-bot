@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVG Illustration</title>
+    <title>SVG Anatomical Illustration</title>
     <style>
         body {
             margin: 0;
@@ -34,59 +34,62 @@
 </head>
 <body>
     <div class="container">
-        <h1>SVG Illustration</h1>
-        <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <h1>Anatomical SVG Illustration</h1>
+        <svg width="300" height="500" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" style="stop-color:#ffdbac;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#ffd4a3;stop-opacity:1" />
                     <stop offset="100%" style="stop-color:#f4c49a;stop-opacity:1" />
                 </linearGradient>
+                <linearGradient id="tipGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#f4a4a4;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#e89999;stop-opacity:1" />
+                </linearGradient>
                 <filter id="shadow">
-                    <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+                    <feDropShadow dx="3" dy="3" stdDeviation="4" flood-opacity="0.3"/>
                 </filter>
             </defs>
             
-            <!-- Arm illustration -->
-            <g id="arm" filter="url(#shadow)">
-                <!-- Upper arm -->
-                <ellipse cx="200" cy="150" rx="40" ry="80" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+            <!-- Main body illustration -->
+            <g id="anatomy" filter="url(#shadow)">
+                <!-- Shaft -->
+                <ellipse cx="150" cy="300" rx="45" ry="120" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
                 
-                <!-- Elbow joint -->
-                <circle cx="200" cy="220" r="30" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+                <!-- Base detail -->
+                <ellipse cx="150" cy="410" rx="50" ry="25" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
                 
-                <!-- Forearm -->
-                <ellipse cx="200" cy="290" rx="35" ry="70" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+                <!-- Glans (head) -->
+                <ellipse cx="150" cy="180" rx="50" ry="60" fill="url(#tipGradient)" stroke="#d89999" stroke-width="2"/>
                 
-                <!-- Hand -->
-                <ellipse cx="200" cy="360" rx="45" ry="30" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+                <!-- Corona ridge -->
+                <ellipse cx="150" cy="235" rx="52" ry="15" fill="url(#tipGradient)" stroke="#d89999" stroke-width="1.5" opacity="0.8"/>
                 
-                <!-- Fingers -->
-                <g id="fingers">
-                    <!-- Thumb -->
-                    <ellipse cx="160" cy="365" rx="12" ry="20" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="1.5" transform="rotate(-30 160 365)"/>
+                <!-- Meatus (opening) -->
+                <ellipse cx="150" cy="155" rx="8" ry="3" fill="#c97979" stroke="#b86868" stroke-width="1"/>
+                
+                <!-- Frenulum -->
+                <path d="M 150 240 L 150 260" stroke="#d4a574" stroke-width="2" fill="none"/>
+                
+                <!-- Testicles -->
+                <g id="testicles">
+                    <ellipse cx="120" cy="450" rx="35" ry="45" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+                    <ellipse cx="180" cy="455" rx="35" ry="45" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
                     
-                    <!-- Index finger -->
-                    <rect x="185" y="375" width="10" height="25" rx="5" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="1.5"/>
-                    
-                    <!-- Middle finger -->
-                    <rect x="200" y="375" width="10" height="28" rx="5" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="1.5"/>
-                    
-                    <!-- Ring finger -->
-                    <rect x="215" y="375" width="10" height="25" rx="5" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="1.5"/>
-                    
-                    <!-- Pinky finger -->
-                    <rect x="230" y="375" width="8" height="20" rx="4" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="1.5"/>
+                    <!-- Seam line -->
+                    <path d="M 150 420 L 150 495" stroke="#c9956a" stroke-width="1.5" fill="none" opacity="0.6"/>
                 </g>
                 
-                <!-- Muscle definition lines -->
-                <path d="M 180 140 Q 190 150 180 160" stroke="#d4a574" stroke-width="1.5" fill="none" opacity="0.5"/>
-                <path d="M 220 140 Q 210 150 220 160" stroke="#d4a574" stroke-width="1.5" fill="none" opacity="0.5"/>
-                <path d="M 180 270 Q 190 280 180 290" stroke="#d4a574" stroke-width="1.5" fill="none" opacity="0.5"/>
-                <path d="M 220 270 Q 210 280 220 290" stroke="#d4a574" stroke-width="1.5" fill="none" opacity="0.5"/>
+                <!-- Texture lines for realism -->
+                <path d="M 125 260 Q 140 265 125 270" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.4"/>
+                <path d="M 175 260 Q 160 265 175 270" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.4"/>
+                <path d="M 125 320 Q 140 325 125 330" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.4"/>
+                <path d="M 175 320 Q 160 325 175 330" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.4"/>
+                
+                <!-- Veins -->
+                <path d="M 120 250 Q 115 300 120 360" stroke="#9b7d5f" stroke-width="2" fill="none" opacity="0.5"/>
+                <path d="M 180 260 Q 185 310 180 370" stroke="#9b7d5f" stroke-width="2" fill="none" opacity="0.5"/>
             </g>
-            
-            <!-- Decorative elements -->
-            <text x="200" y="50" font-family="Arial, sans-serif" font-size="24" fill="#667eea" text-anchor="middle" font-weight="bold">Human Arm</text>
         </svg>
     </div>
 </body>
