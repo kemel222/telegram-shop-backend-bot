@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Anatomical Illustration</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        svg {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Anatomical SVG Illustration</h1>
+        <svg width="300" height="500" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#ffdbac;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#ffd4a3;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#f4c49a;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="tipGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#f4a4a4;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#e89999;stop-opacity:1" />
+                </linearGradient>
+                <filter id="shadow">
+                    <feDropShadow dx="3" dy="3" stdDeviation="4" flood-opacity="0.3"/>
+                </filter>
+            </defs>
+            
+            <!-- Main body illustration -->
+            <g id="anatomy" filter="url(#shadow)">
+                <!-- Shaft -->
+                <ellipse cx="150" cy="300" rx="45" ry="120" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+                
+                <!-- Base detail -->
+                <ellipse cx="150" cy="410" rx="50" ry="25" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+                
+                <!-- Glans (head) -->
+                <ellipse cx="150" cy="180" rx="50" ry="60" fill="url(#tipGradient)" stroke="#d89999" stroke-width="2"/>
+                
+                <!-- Corona ridge -->
+                <ellipse cx="150" cy="235" rx="52" ry="15" fill="url(#tipGradient)" stroke="#d89999" stroke-width="1.5" opacity="0.8"/>
+                
+                <!-- Meatus (opening) -->
+                <ellipse cx="150" cy="155" rx="8" ry="3" fill="#c97979" stroke="#b86868" stroke-width="1"/>
+                
+                <!-- Frenulum -->
+                <path d="M 150 240 L 150 260" stroke="#d4a574" stroke-width="2" fill="none"/>
+                
+                <!-- Testicles -->
+                <g id="testicles">
+                    <ellipse cx="120" cy="450" rx="35" ry="45" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+                    <ellipse cx="180" cy="455" rx="35" ry="45" fill="url(#skinGradient)" stroke="#d4a574" stroke-width="2"/>
+                    
+                    <!-- Seam line -->
+                    <path d="M 150 420 L 150 495" stroke="#c9956a" stroke-width="1.5" fill="none" opacity="0.6"/>
+                </g>
+                
+                <!-- Texture lines for realism -->
+                <path d="M 125 260 Q 140 265 125 270" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.4"/>
+                <path d="M 175 260 Q 160 265 175 270" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.4"/>
+                <path d="M 125 320 Q 140 325 125 330" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.4"/>
+                <path d="M 175 320 Q 160 325 175 330" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.4"/>
+                
+                <!-- Veins -->
+                <path d="M 120 250 Q 115 300 120 360" stroke="#9b7d5f" stroke-width="2" fill="none" opacity="0.5"/>
+                <path d="M 180 260 Q 185 310 180 370" stroke="#9b7d5f" stroke-width="2" fill="none" opacity="0.5"/>
+            </g>
+        </svg>
+    </div>
+</body>
+</html>
